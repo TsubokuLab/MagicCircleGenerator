@@ -1,27 +1,3 @@
-  // インポートボタン
-  document.getElementById('import-button').addEventListener('click', () => {
-    document.getElementById('import-file').click();
-  });
-  
-  // ファイル選択時の処理
-  document.getElementById('import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      const success = importLayersFromJSON(event.target.result);
-      if (success) {
-        //alert('レイヤーデータのインポートが完了しました。');
-      } else {
-        alert('レイヤーデータのインポート中にエラーが発生しました。');
-      }
-      // ファイル入力をリセット
-      e.target.value = '';
-    };
-    reader.readAsText(file);
-  });
-
 /**
  * 魔法陣ジェネレーター
  * ブラウザで動作する魔法陣作成ツール
@@ -1145,7 +1121,7 @@ function hideGhostGuide() {
   if (ghostLayers.length > 0) {
     // アニメーションフレーム用変数を初期化
     let fadeOpacity = 0.5;
-    const fadeInterval = 0.05;
+    const fadeInterval = 0.01;
     const fadeStep = 20; // ミリ秒
     
     // フェードアウトのアニメーション関数
@@ -1154,7 +1130,7 @@ function hideGhostGuide() {
       
       if (fadeOpacity <= 0) {
         // アニメーション終了: ゴーストレイヤーを削除
-        app.layers = app.layers.filter(layer => !layer.isGhost);
+        //app.layers = app.layers.filter(layer => !layer.isGhost);
         renderCanvas();
         return;
       }
@@ -1162,14 +1138,11 @@ function hideGhostGuide() {
       // ゴーストレイヤーの色のアルファ値を更新
       ghostLayers.forEach(layer => {
         // 既存の色情報から新しいRGBA文字列を生成
-        const colorRGB = layer.params.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
-        if (colorRGB) {
-          // RGBA形式の場合
-          layer.params.color = `rgba(${colorRGB[1]}, ${colorRGB[2]}, ${colorRGB[3]}, ${fadeOpacity})`;
-        } else {
-          // Hex形式やその他の形式の場合は直接RGBA形式に変換
-          layer.params.color = `rgba(255, 255, 255, ${fadeOpacity})`;
-        }
+        const colorRGB = layer.params.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+
+        var _alpha = colorRGB[4];
+        _alpha -= fadeInterval;
+        layer.params.color = `rgba(255, 255, 255, ${_alpha})`;
       });
       
       // レイヤーを再描画
@@ -1200,6 +1173,11 @@ function setupGhostGuide(type, paramName, sliderId) {
     // 現在のパラメータを取得
     const params = getPreviewParams(type, paramName, value);
     
+    // 既存のタイマーをクリア
+    if (ghostGuideTimer) {
+      clearTimeout(ghostGuideTimer);
+    }
+
     // ゴーストガイド表示
     showGhostGuide(params);
   });

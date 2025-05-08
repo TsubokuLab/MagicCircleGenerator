@@ -1,3 +1,39 @@
+/* 見出しとボタンを一緒に配置するためのスタイル */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #ddd; /* ここで下線を一本だけ表示 */
+}
+
+.section-header h2 {
+  margin: 0;
+  padding: 0;
+  border-bottom: none; /* 確実に下線を削除 */
+  font-size: 1.2rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #4a90e2;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.icon-button:hover {
+  background-color: rgba(74, 144, 226, 0.1);
+}
+
 /* ゴーストガイドのフェードアウトアニメーション */
 @keyframes fadeOut {
   from { opacity: 0.3; }
@@ -5,7 +41,7 @@
 }
 
 .ghost-guide-fadeout {
-  animation: fadeOut 0.8s ease-out forwards;
+  animation: fadeOut 1.5s ease-out forwards;
 }
 
 /* チェック柄背景パターン */
@@ -76,10 +112,9 @@ main {
 }
 
 .panel-section h2 {
-  font-size: 1.2rem;
   margin-bottom: 15px;
   padding-bottom: 5px;
-  border-bottom: 1px solid #ddd;
+  border-bottom:  1px solid #ccc;
 }
 
 .form-group {
