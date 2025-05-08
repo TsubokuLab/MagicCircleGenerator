@@ -1546,7 +1546,7 @@ var json_string = {
   "settings": {
     "backgroundColor": "#000000",
     "foregroundColor": "#ffffff",
-    "transparentBackground": true
+    "transparentBackground": false
   },
   "layers": [
     {
