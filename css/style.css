@@ -323,7 +323,7 @@ main {
 
 /* レイヤーパネル */
 .layer-panel {
-  flex: 0 0 250px;
+  flex: 0 0 270px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);

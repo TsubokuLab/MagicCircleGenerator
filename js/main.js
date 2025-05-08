@@ -24,7 +24,6 @@ const app = {
 function importLayersFromJSON(jsonData) {
   try {
     const data = JSON.parse(jsonData);
-    
     // 設定をインポート
     if (data.settings) {
       // 基本設定を上書き
@@ -39,8 +38,8 @@ function importLayersFromJSON(jsonData) {
     // レイヤーをインポート
     if (data.layers && Array.isArray(data.layers)) {
       // 既存のレイヤーをクリア
-      app.layers = [];
-      app.nextLayerId = 0;
+      // app.layers = [];
+      // app.nextLayerId = 0;
       
       // 新しいレイヤーを追加
       data.layers.forEach(layerData => {
@@ -1418,13 +1417,7 @@ function setupEventListeners() {
   
   // リセットボタン
   document.getElementById('reset-button').addEventListener('click', () => {
-    if (confirm('すべてのレイヤーをクリアしますか？')) {
-      app.layers = [];
-      app.activeLayer = null;
-      app.nextLayerId = 0;
-      LayerManager.updateLayersList();
-      renderCanvas();
-    }
+    clearAll();
   });
   
   // ランダム生成ボタン
@@ -1535,6 +1528,18 @@ function resizeCanvas() {
   
   // レンダリングも更新
   renderCanvas();
+}
+
+function clearAll(){
+  if (confirm('すべてのレイヤーをクリアしますか？')) {
+      app.layers = [];
+      app.activeLayer = null;
+      app.nextLayerId = 0;
+      LayerManager.updateLayersList();
+      renderCanvas();
+  }else{
+
+  }
 }
 
 var json_string = {
@@ -1766,6 +1771,10 @@ function init() {
     
     const reader = new FileReader();
     reader.onload = function(event) {
+
+      // 既存レイヤーを削除するかの確認
+      clearAll();
+
       const success = importLayersFromJSON(event.target.result);
       if (success) {
         //alert('レイヤーデータのインポートが完了しました。');
