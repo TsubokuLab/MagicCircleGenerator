@@ -1,0 +1,17 @@
+{
+  "name": "magiccirclegenerator",
+  "version": "1.0.0",
+  "homepage": "https://TsubokuLab.github.io/MagicCircleGenerator",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "gh-pages -d ."
+  },
+  "keywords": [],
+  "author": "Teruaki Tsubokura",
+  "license": "ISC",
+  "devDependencies": {
+    "gh-pages": "^x.x.x"
+  },
+  "description": "魔法陣ジェネレーター by kohack_v"
+}

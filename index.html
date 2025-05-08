@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>魔法陣ジェネレーター</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>魔法陣ジェネレーター</h1>
+    </header>
+    
+    <main>
+      <div class="control-panel">
+        <div class="panel-section">
+          <h2>基本設定</h2>
+          <div class="color-controls">
+            <div class="color-item">
+              <label for="background-color">背景色:</label>
+              <input type="color" id="background-color" value="#000000" class="small-color-picker">
+            </div>
+            <div class="color-item">
+              <label for="foreground-color">前景色:</label>
+              <input type="color" id="foreground-color" value="#ffffff" class="small-color-picker">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="transparent-background">背景を透過させる:</label>
+            <input type="checkbox" id="transparent-background">
+          </div>
+        </div>
+        
+        <div class="panel-section">
+          <h2>要素追加</h2>
+          <div class="element-tabs">
+            <button class="tab-button active" data-tab="circles">円</button>
+            <button class="tab-button" data-tab="shapes">図形</button>
+            <button class="tab-button" data-tab="lines">線</button>
+          </div>
+          
+          <div class="tab-content active" id="circles">
+            <div class="form-group">
+            <label for="circle-radius">半径:</label>
+            <div class="slider-container">
+              <input type="range" id="circle-radius-slider" value="0.5" min="0" max="1" step="0.01" class="slider">
+              <input type="number" id="circle-radius" value="0.5" min="0" max="1" step="0.01" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="circle-thickness">線の太さ:</label>
+            <div class="slider-container">
+              <input type="range" id="circle-thickness-slider" value="2" min="1" max="20" step="1" class="slider">
+              <input type="number" id="circle-thickness" value="2" min="1" max="20" step="1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+              <label for="circle-style">スタイル:</label>
+              <select id="circle-style">
+                <option value="solid">実線</option>
+                <option value="dashed">破線</option>
+                <option value="dotted">点線</option>
+              </select>
+            </div>
+            <button id="add-circle" class="action-button">円を追加</button>
+          </div>
+          
+          <div class="tab-content" id="shapes">
+            <div class="form-group">
+              <label for="shape-type">図形:</label>
+              <select id="shape-type">
+                <option value="circle">丸</option>
+                <option value="arc">弧</option>
+                <option value="square">四角</option>
+                <option value="triangle">三角</option>
+                <option value="diamond">ひし形</option>
+                <option value="star">星</option>
+              </select>
+            </div>
+            <div class="form-group">
+            <label for="shape-radius">配置半径:</label>
+            <div class="slider-container">
+              <input type="range" id="shape-radius-slider" value="0.5" min="0" max="1" step="0.01" class="slider">
+              <input type="number" id="shape-radius" value="0.5" min="0" max="1" step="0.01" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="shape-size">サイズ:</label>
+            <div class="slider-container">
+              <input type="range" id="shape-size-slider" value="0.05" min="0.01" max="0.3" step="0.01" class="slider">
+              <input type="number" id="shape-size" value="0.05" min="0.01" max="0.3" step="0.01" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="shape-count">分割数:</label>
+            <div class="slider-container">
+              <input type="range" id="shape-count-slider" value="6" min="1" max="100" step="1" class="slider">
+              <input type="number" id="shape-count" value="6" min="1" max="100" step="1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="shape-offset">角度オフセット (度):</label>
+            <div class="slider-container">
+              <input type="range" id="shape-offset-slider" value="0" min="0" max="360" step="1" class="slider">
+              <input type="number" id="shape-offset" value="0" min="0" max="360" step="1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="shape-rotation">図形の回転 (度):</label>
+            <div class="slider-container">
+              <input type="range" id="shape-rotation-slider" value="0" min="0" max="360" step="1" class="slider">
+              <input type="number" id="shape-rotation" value="0" min="0" max="360" step="1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group" id="shape-aspect-group">
+            <label for="shape-aspect">アスペクト比:</label>
+            <div class="slider-container">
+              <input type="range" id="shape-aspect-slider" value="1" min="0.1" max="5" step="0.1" class="slider">
+              <input type="number" id="shape-aspect" value="1" min="0.1" max="5" step="0.1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+              <label for="shape-fill">塗りつぶし:</label>
+              <select id="shape-fill">
+                <option value="fill">塗りつぶし</option>
+                <option value="stroke">線のみ</option>
+                <option value="both">両方</option>
+              </select>
+            </div>
+            <button id="add-shapes" class="action-button">図形を追加</button>
+          </div>
+          
+          <div class="tab-content" id="lines">
+            <div class="form-group">
+              <label for="line-type">線のタイプ:</label>
+              <select id="line-type">
+                <option value="connecting">接続線</option>
+                <option value="polygon">多角形</option>
+                <option value="star">星形</option>
+                <option value="radial">放射状</option>
+              </select>
+            </div>
+            <div class="form-group">
+            <label for="line-count">分割数:</label>
+            <div class="slider-container">
+              <input type="range" id="line-count-slider" value="6" min="3" max="20" step="1" class="slider">
+              <input type="number" id="line-count" value="6" min="3" max="20" step="1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="line-radius">半径:</label>
+            <div class="slider-container">
+              <input type="range" id="line-radius-slider" value="0.5" min="0" max="1" step="0.01" class="slider">
+              <input type="number" id="line-radius" value="0.5" min="0" max="1" step="0.01" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="line-thickness">線の太さ:</label>
+            <div class="slider-container">
+              <input type="range" id="line-thickness-slider" value="2" min="1" max="20" step="1" class="slider">
+              <input type="number" id="line-thickness" value="2" min="1" max="20" step="1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group">
+            <label for="line-offset">角度オフセット (度):</label>
+            <div class="slider-container">
+              <input type="range" id="line-offset-slider" value="0" min="0" max="360" step="1" class="slider">
+              <input type="number" id="line-offset" value="0" min="0" max="360" step="1" class="slider-value">
+            </div>
+            </div>
+            <div class="form-group" id="star-factor-group" style="display: none;">
+            <label for="star-factor">星形係数:</label>
+            <div class="slider-container">
+              <input type="range" id="star-factor-slider" value="2" min="1" max="10" step="0.1" class="slider">
+              <input type="number" id="star-factor" value="2" min="1" max="10" step="0.1" class="slider-value">
+            </div>
+            </div>
+            <button id="add-lines" class="action-button">線を追加</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="canvas-container">
+        <canvas id="magic-circle-canvas"></canvas>
+      </div>
+      
+      <div class="layer-panel">
+        <div class="panel-section">
+          <div class="button-group">
+            <button id="random-button" class="action-button primary">ランダム生成</button>
+            <button id="reset-button" class="action-button secondary">リセット</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h2>レイヤー</h2>
+          <div id="layers-list" class="layers-list"></div>
+        </div>
+        
+        <div class="panel-section">
+        <h2>エクスポート</h2>
+        <div class="form-group">
+        <label for="export-format">フォーマット:</label>
+        <select id="export-format">
+        <option value="png">PNG</option>
+        <option value="svg">SVG</option>
+        <option value="normalmap">ノーマルマップ</option>
+        <option value="json">レイヤーデータ (JSON)</option>
+        </select>
+        </div>
+        <div class="form-group">
+        <label for="texture-size">テクスチャサイズ:</label>
+        <select id="texture-size">
+        <option value="64">64 x 64</option>
+        <option value="128">128 x 128</option>
+        <option value="256">256 x 256</option>
+        <option value="512">512 x 512</option>
+        <option value="1024" selected>1024 x 1024</option>
+        <option value="2048">2048 x 2048</option>
+        <option value="4096">4096 x 4096</option>
+        <option value="8192">8192 x 8192</option>
+        </select>
+        </div>
+        <div class="form-group" id="normal-map-intensity-group" style="display: none;">
+        <label for="normal-map-intensity">ノーマルマップ強度:</label>
+        <input type="range" id="normal-map-intensity" min="1" max="10" value="5">
+        </div>
+        <button id="export-button" class="action-button">エクスポート</button>
+        <div class="import-container">
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+        <button id="import-button" class="action-button secondary">レイヤーデータインポート</button>
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="js/FileSaver.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
