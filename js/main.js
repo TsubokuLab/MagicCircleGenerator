@@ -20,45 +20,9 @@
       e.target.value = '';
     };
     reader.readAsText(file);
-  });// レイヤーデータのインポート
-function importLayersFromJSON(jsonData) {
-  try {
-    const data = JSON.parse(jsonData);
-    
-    // 設定をインポート
-    if (data.settings) {
-      app.settings = { ...data.settings };
-      
-      // UIのカラーピッカーとチェックボックスを更新
-      document.getElementById('background-color').value = app.settings.backgroundColor;
-      document.getElementById('foreground-color').value = app.settings.foregroundColor;
-      document.getElementById('transparent-background').checked = app.settings.transparentBackground;
-    }
-    
-    // レイヤーをインポート
-    if (data.layers && Array.isArray(data.layers)) {
-      // 既存のレイヤーをクリア
-      app.layers = [];
-      app.nextLayerId = 0;
-      
-      // 新しいレイヤーを追加
-      data.layers.forEach(layerData => {
-        LayerManager.addLayer(layerData.type, layerData.params);
-      });
-      
-      // レイヤーリストを更新
-      LayerManager.updateLayersList();
-    }
-    
-    // キャンバスを再描画
-    renderCanvas();
-    
-    return true;
-  } catch (error) {
-    console.error('JSONファイルのインポートエラー:', error);
-    return false;
-  }
-}/**
+  });
+
+/**
  * 魔法陣ジェネレーター
  * ブラウザで動作する魔法陣作成ツール
  */
@@ -152,26 +116,27 @@ class Layer {
     this.isGhost = false; // ゴーストガイド表示用フラグ
   }
   
-  render(ctx, customCanvas) {
+  render(ctx, customCanvas, scaleFactor) {
     if (!this.visible) return;
     
     // カスタムキャンバスが指定されていない場合はデフォルトのキャンバスを使用
     const canvas = customCanvas || app.canvas;
-    
+    const _scale = scaleFactor || 1;
+
     switch(this.type) {
       case 'circle':
-        this.renderCircle(ctx, canvas);
+        this.renderCircle(ctx, canvas, _scale);
         break;
       case 'shapes':
-        this.renderShapes(ctx, canvas);
+        this.renderShapes(ctx, canvas, _scale);
         break;
       case 'lines':
-        this.renderLines(ctx, canvas);
+        this.renderLines(ctx, canvas, _scale);
         break;
     }
   }
   
-  renderCircle(ctx, canvas) {
+  renderCircle(ctx, canvas, scaleFactor) {
     const { radius, thickness, style, color } = this.params;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -179,12 +144,12 @@ class Layer {
     const actualRadius = radius * maxRadius;
     
     ctx.strokeStyle = color;
-    ctx.lineWidth = thickness;
-    
+    ctx.lineWidth = thickness * scaleFactor;
+
     if (style === 'dashed') {
-      ctx.setLineDash([10, 5]);
+      ctx.setLineDash([10 * scaleFactor, 5 * scaleFactor]);
     } else if (style === 'dotted') {
-      ctx.setLineDash([2, 5]);
+      ctx.setLineDash([2 * scaleFactor, 5 * scaleFactor]);
     } else {
       ctx.setLineDash([]);
     }
@@ -195,7 +160,7 @@ class Layer {
     ctx.setLineDash([]);
   }
   
-  renderShapes(ctx, canvas) {
+  renderShapes(ctx, canvas, scaleFactor) {
     const {
       shapeType, size, count, radius, offset, fill, color, rotation = 0, aspect = 1
     } = this.params;
@@ -395,7 +360,7 @@ class Layer {
     ctx.restore();
   }
   
-  renderLines(ctx, canvas) {
+  renderLines(ctx, canvas, scaleFactor) {
     const { 
       lineType, count, radius, thickness, offset, color, starFactor 
     } = this.params;
@@ -406,7 +371,7 @@ class Layer {
     const actualRadius = radius * maxRadius;
     
     ctx.strokeStyle = color;
-    ctx.lineWidth = thickness;
+    ctx.lineWidth = thickness * scaleFactor;
     
     switch(lineType) {
       case 'radial':
@@ -669,29 +634,31 @@ function renderCanvas() {
   // 正方形に保つため、小さい方のサイズを使用
   const size = Math.min(containerWidth, containerHeight) - 40; // 余白用に少し小さく
   
+  const scaleFactor = size / BASE_CANVAS_SIZE;
+
   app.canvas.width = size;
   app.canvas.height = size;
-  
+
   // 背景クリア
   if (app.settings.transparentBackground) {
     // 透過背景の場合は完全にクリア
     app.ctx.clearRect(0, 0, app.canvas.width, app.canvas.height);
-    
-    // キャンバスの背景にチェック柄パターンを表示
+
+    // 背景にチェック柄パターンを表示
     // キャンバスのコンテナにクラスを追加
-    container.classList.add('transparent-bg');
+    app.canvas.classList.add('transparent-bg');
   } else {
     // 背景色を設定
     app.ctx.fillStyle = app.settings.backgroundColor;
     app.ctx.fillRect(0, 0, app.canvas.width, app.canvas.height);
     
     // チェック柄クラスを削除
-    container.classList.remove('transparent-bg');
+    app.canvas.classList.remove('transparent-bg');
   }
   
   // レイヤー描画
   app.layers.forEach(layer => {
-    layer.render(app.ctx);
+    layer.render(app.ctx, app.canvas, scaleFactor);
   });
 }
 
@@ -722,6 +689,7 @@ const Exporter = {
     
     // スケール係数を計算（1024pxを基準とする）
     const scaleFactor = textureSize / BASE_CANVAS_SIZE;
+    console.log("[ exportTexture ] scaleFactor: " + scaleFactor);
     
     // 背景色を設定（透過設定がオフの場合のみ）
     if (!app.settings.transparentBackground) {
@@ -736,12 +704,12 @@ const Exporter = {
       
       // 線の太さをスケーリング
       if (tempLayer.params.thickness) {
-        tempLayer.params.thickness = Math.max(1, Math.round(tempLayer.params.thickness * scaleFactor));
+        tempLayer.params.thickness = Math.max(1, Math.round(tempLayer.params.thickness));
       }
-      
+
       // ローカルなキャンバスサイズを設定
       const tempCanvas = { width: textureSize, height: textureSize };
-      tempLayer.render(exportCtx, tempCanvas);
+      tempLayer.render(exportCtx, tempCanvas, scaleFactor);
     });
     
     switch(format) {
@@ -849,9 +817,9 @@ createCircleSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
   circle.setAttribute('stroke-width', Math.max(1, thickness * scaleFactor));
   
   if (style === 'dashed') {
-    circle.setAttribute('stroke-dasharray', '10,5');
+    circle.setAttribute('stroke-dasharray', 10 * scaleFactor + ',' + 5 * scaleFactor);
   } else if (style === 'dotted') {
-    circle.setAttribute('stroke-dasharray', '2,5');
+    circle.setAttribute('stroke-dasharray', 2 * scaleFactor + ',' + 5 * scaleFactor);
   }
   
   return circle;
@@ -1216,116 +1184,6 @@ function hideGhostGuide() {
   }
 }
 
-// スライダーとフィールドを連動させる関数
-function syncSliderAndField(sliderId, fieldId, paramType) {
-  const slider = document.getElementById(sliderId);
-  if(slider == null) return;
-  
-  // スライダー入力イベント
-  /*
-  slider.addEventListener('input', () => {
-    field.value = slider.value;
-
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(slider.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0]; // 例: circle, shape, line
-    
-    // 現在のパラメータを取得
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-  });
-  */
-  
-  // スライダー変更完了イベント（mouseupなど）
-  /*
-  slider.addEventListener('change', () => {
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(slider.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0]; // 例: circle, shape, line
-    
-    // 現在のパラメータを取得
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-
-    // タイマーをセットして2秒後に非表示
-    ghostGuideTimer = setTimeout(() => {
-      hideGhostGuide();
-      ghostGuideTimer = null;
-    }, 2000);
-  });
-  */
-  
-  const field = document.getElementById(fieldId);
-  if(field == null){
-    console.error( field_id + ' is null.');
-    return;
-  }
-
-  // 数値入力フィールド入力イベント（リアルタイム反映のため）
-  /*
-  field.addEventListener('input', () => {
-    slider.value = field.value;
-    
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(field.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0];
-    
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-
-    // タイマーをセットして2秒後に非表示
-    ghostGuideTimer = setTimeout(() => {
-      hideGhostGuide();
-      ghostGuideTimer = null;
-    }, 2000);
-  });
-  */
-
-  // 数値入力フィールド入力イベント
-  /*
-  field.addEventListener('change', () => {
-    slider.value = field.value;
-    
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(field.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0];
-    
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-    
-    // タイマーをセットして2秒後に非表示
-    ghostGuideTimer = setTimeout(() => {
-      hideGhostGuide();
-      ghostGuideTimer = null;
-    }, 2000);
-  });
-  */
-}
-
 // スライダードラッグ中にゴーストガイドを表示する関数
 function setupGhostGuide(type, paramName, sliderId) {
   const slider = document.getElementById(sliderId);
@@ -1439,25 +1297,8 @@ function getPreviewParams(type, paramName, value) {
   return params;
 }
 
-// タブ内のイベントハンドラを設定（再利用可能にした）
-function setupTabEventListeners(){
-  // スライダーと入力フィールドの連動設定
-  syncSliderAndField('circle-radius-slider', 'circle-radius');
-  syncSliderAndField('circle-thickness-slider', 'circle-thickness');
-  //syncSliderAndField('circle-style', 'circle-style');
-  //syncSliderAndField('shape-type', 'shape-type');
-  syncSliderAndField('shape-size-slider', 'shape-size');
-  syncSliderAndField('shape-count-slider', 'shape-count');
-  syncSliderAndField('shape-radius-slider', 'shape-radius');
-  syncSliderAndField('shape-offset-slider', 'shape-offset');
-  syncSliderAndField('shape-rotation-slider', 'shape-rotation');
-  syncSliderAndField('shape-aspect-slider', 'shape-aspect');
-  syncSliderAndField('line-count-slider', 'line-count');
-  syncSliderAndField('line-radius-slider', 'line-radius');
-  syncSliderAndField('line-thickness-slider', 'line-thickness');
-  syncSliderAndField('line-offset-slider', 'line-offset');
-  syncSliderAndField('star-factor-slider', 'star-factor');
-  
+// DOM要素のイベント設定
+function setupEventListeners() {
   // ゴーストガイド設定
   setupGhostGuide('circle', 'radius', 'circle-radius-slider');
   setupGhostGuide('circle', 'thickness', 'circle-thickness-slider');
@@ -1476,11 +1317,6 @@ function setupTabEventListeners(){
   setupGhostGuide('lines', 'thickness', 'line-thickness-slider');
   setupGhostGuide('lines', 'offset', 'line-offset-slider');
   setupGhostGuide('lines', 'starFactor', 'star-factor-slider');
-}
-
-// DOM要素のイベント設定
-function setupEventListeners() {
-  setupTabEventListeners();
 
   // タブ切り替え
   document.querySelectorAll('.tab-button').forEach(button => {
@@ -1497,11 +1333,6 @@ function setupEventListeners() {
         content.classList.remove('active');
       });
       document.getElementById(tabId).classList.add('active');
-
-      // タブイベントを再登録
-      setTimeout(() => {
-        setupTabEventListeners();
-      }, 500);
     });
   });
   
