@@ -1,3 +1,14 @@
+/* シェアボタン */
+.share-button {
+  position: absolute;
+  right: 0px;
+  bottom: -7px; /* 下部への配置を追加 */
+}
+
+.twitter-share-button {
+  margin-top: 0;
+}
+
 /* マジカルなグラデーション背景 */
 body {
   font-family: 'Segoe UI', 'Meiryo UI', sans-serif;
@@ -47,6 +58,15 @@ body {
 }
 
 /* ヘッダーのテキストに光彩効果を追加 */
+.title-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
 .title-icon {
   width: 90px;
   height: 90px;
@@ -78,9 +98,15 @@ body {
   margin-bottom: 5px;
 }
 
-.subtitle {
+.subtitle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 中央揃えに変更 */
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  margin-top: 5px;
+  position: relative; /* 相対配置に変更 */
 }
 
 .author-link {
@@ -117,9 +143,9 @@ body {
 .title-container {
   margin-bottom: 20px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 15px;
+  position: relative;
+  padding: 0 20px 0px 20px; /* 下部のパディングを増やす */
 }
 
 /* 見出しとボタンを一緒に配置するためのスタイル */
