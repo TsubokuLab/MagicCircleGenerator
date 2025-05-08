@@ -1,3 +1,127 @@
+/* マジカルなグラデーション背景 */
+body {
+  font-family: 'Segoe UI', 'Meiryo UI', sans-serif;
+  color: #333;
+  line-height: 1.6;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* コンテナに微妙な透明感を追加 */
+.container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(5px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* 各パネルに微妙な光の効果を追加 */
+.control-panel, .layer-panel {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(50, 50, 93, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: box-shadow 0.3s ease;
+}
+
+.control-panel:hover, .layer-panel:hover {
+  box-shadow: 0 7px 30px rgba(50, 50, 93, 0.2), 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* ヘッダーのテキストに光彩効果を追加 */
+.title-icon {
+  width: 90px;
+  height: 90px;
+  filter: drop-shadow(0 0 10px rgba(150, 150, 255, 0.7));
+  animation: pulse 3s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(150, 150, 255, 0.5));
+    transform: scale(1);
+  }
+  100% {
+    filter: drop-shadow(0 0 15px rgba(170, 200, 255, 0.8));
+    transform: scale(1.05);
+  }
+}
+
+.title-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title-text h1 {
+  font-size: 2.5rem;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(150, 150, 255, 0.3);
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.author-link {
+  color: rgba(170, 200, 255, 0.9);
+  text-decoration: none;
+  position: relative;
+  transition: color 0.3s;
+}
+
+.author-link::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background-color: rgba(170, 200, 255, 0.9);
+  transform: scaleX(0);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease-out;
+}
+
+.author-link:hover {
+  color: rgba(200, 220, 255, 1);
+  text-shadow: 0 0 8px rgba(100, 150, 255, 0.5);
+}
+
+.author-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+/* タイトルコンテナのスタイル */
+.title-container {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
 /* 見出しとボタンを一緒に配置するためのスタイル */
 .section-header {
   display: flex;
@@ -66,30 +190,6 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Segoe UI', 'Meiryo UI', sans-serif;
-  background-color: #f0f0f0;
-  color: #333;
-  line-height: 1.6;
-}
-
-.container {
-  width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-header h1 {
-  font-size: 2.5rem;
-  color: #444;
-}
-
 main {
   display: flex;
   flex-wrap: wrap;
@@ -99,9 +199,6 @@ main {
 /* コントロールパネル */
 .control-panel {
   flex: 0 0 300px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 15px;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
@@ -114,7 +211,8 @@ main {
 .panel-section h2 {
   margin-bottom: 15px;
   padding-bottom: 5px;
-  border-bottom:  1px solid #ccc;
+  border-bottom:  1px solid rgba(204, 204, 204, 0.5);
+  color: #333;
 }
 
 .form-group {
@@ -133,6 +231,7 @@ main {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 /* スライダーコンテナ */
@@ -147,7 +246,7 @@ main {
   height: 8px;
   -webkit-appearance: none;
   appearance: none;
-  background: #ddd;
+  background: linear-gradient(90deg, #1a237e, #7986cb);
   outline: none;
   border-radius: 4px;
 }
@@ -158,17 +257,19 @@ main {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4a90e2;
+  background: #3f51b5;
   cursor: pointer;
+  box-shadow: 0 0 5px rgba(63, 81, 181, 0.5);
 }
 
 .slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4a90e2;
+  background: #3f51b5;
   cursor: pointer;
   border: none;
+  box-shadow: 0 0 5px rgba(63, 81, 181, 0.5);
 }
 
 .slider-value {
@@ -178,6 +279,7 @@ main {
   border-radius: 4px;
   font-size: 14px;
   text-align: center;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .form-group input[type="range"] {
@@ -192,7 +294,7 @@ main {
 .element-tabs {
   display: flex;
   margin-bottom: 15px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid rgba(221, 221, 221, 0.5);
 }
 
 .tab-button {
@@ -202,11 +304,18 @@ main {
   cursor: pointer;
   font-size: 14px;
   border-bottom: 3px solid transparent;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.tab-button:hover {
+  background-color: rgba(63, 81, 181, 0.05);
 }
 
 .tab-button.active {
-  border-bottom-color: #4a90e2;
+  border-bottom-color: #3f51b5;
   font-weight: 600;
+  color: #3f51b5;
 }
 
 .tab-content {
@@ -222,34 +331,37 @@ main {
   display: block;
   width: 100%;
   padding: 10px;
-  background-color: #4a90e2;
+  background: linear-gradient(135deg, #3a7bd5, #3f51b5);
   color: white;
   border: none;
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
   margin-top: 15px;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .action-button:hover {
-  background-color: #3a7bd5;
+  background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+  transform: translateY(-1px);
+  box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
 }
 
 .action-button.primary {
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #43a047, #2e7d32);
 }
 
 .action-button.primary:hover {
-  background-color: #388E3C;
+  background: linear-gradient(135deg, #43a047, #1b5e20);
 }
 
 .action-button.secondary {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #e53935, #c62828);
 }
 
 .action-button.secondary:hover {
-  background-color: #d32f2f;
+  background: linear-gradient(135deg, #e53935, #b71c1c);
 }
 
 /* コンパクト設定 */
@@ -305,14 +417,16 @@ main {
 /* キャンバス */
 .canvas-container {
   flex: 1 1 auto;
-  background-color: #333;
+  background-color: #1a1a2e;
+  background: radial-gradient(circle, #1a1a2e 0%, #0f0f1a 70%, #070711 100%);
   border-radius: 8px;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
   min-height: 200px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(83, 100, 255, 0.2) inset;
+  border: 1px solid rgba(100, 120, 255, 0.1);
 }
 
 #magic-circle-canvas {
@@ -324,9 +438,6 @@ main {
 /* レイヤーパネル */
 .layer-panel {
   flex: 0 0 270px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   padding: 15px;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
@@ -336,18 +447,21 @@ main {
   max-height: 400px;
   overflow-y: auto;
   margin-bottom: 15px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
 }
 
 .layer-item {
   display: flex;
   align-items: center;
   padding: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(238, 238, 238, 0.5);
   gap: 10px;
+  transition: background-color 0.2s ease;
 }
 
 .layer-item:hover {
-  background-color: #f5f5f5;
+  background-color: rgba(245, 245, 245, 0.9);
 }
 
 .layer-visibility {
@@ -373,10 +487,11 @@ main {
   cursor: pointer;
   font-size: 14px;
   color: #666;
+  transition: color 0.2s ease;
 }
 
 .layer-actions button:hover {
-  color: #333;
+  color: #3f51b5;
 }
 
 /* レスポンシブ対応 */

@@ -3,14 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>魔法陣ジェネレーター</title>
+  <title>魔法陣ジェネレーター - ブラウザで美しい魔法陣を作成</title>
+  
+  <!-- SEO対策 -->
+  <meta name="description" content="ブラウザ上で美しい魔法陣を作成できるオンラインツール。円、図形、線を自由に配置し、SVG、PNG、ノーマルマップとしてエクスポート可能。">
+  <meta name="keywords" content="魔法陣, ジェネレーター, オンライン, SVG, 画像作成, デザイン, テクスチャ">
+  <meta name="author" content="kohack_v">
+  
+  <!-- OGP設定 -->
+  <meta property="og:title" content="魔法陣ジェネレーター">
+  <meta property="og:description" content="ブラウザ上で美しい魔法陣を作成できるオンラインツール。SVG、PNG出力対応。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tsubokulab.github.io/MagicCircleGenerator/">
+  <meta property="og:image" content="https://tsubokulab.github.io/MagicCircleGenerator/img/thumbnail.png">
+  <meta property="og:site_name" content="魔法陣ジェネレーター">
+  
+  <!-- Twitter Card設定 -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@kohack_v">
+  <meta name="twitter:creator" content="@kohack_v">
+  <meta name="twitter:title" content="魔法陣ジェネレーター">
+  <meta name="twitter:description" content="ブラウザ上で美しい魔法陣を作成できるオンラインツール。SVG、PNG出力対応。">
+  <meta name="twitter:image" content="https://tsubokulab.github.io/MagicCircleGenerator/img/thumbnail.png">
+  
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="img/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>魔法陣ジェネレーター</h1>
+      <div class="title-container">
+        <img src="img/favicon_128x128.png" alt="魔法陣ジェネレーター" class="title-icon">
+        <div class="title-text">
+          <h1>魔法陣ジェネレーター</h1>
+          <div class="subtitle">
+            <a href="https://x.com/kohack_v" target="_blank" class="author-link">by kohack_v</a>
+          </div>
+        </div>
+      </div>
     </header>
     
     <main>
@@ -64,7 +95,7 @@
                 <option value="dotted">点線</option>
               </select>
             </div>
-            <button id="add-circle" class="action-button"><i class="fas fa-circle"></i> 円を追加</button>
+            <button id="add-circle" class="action-button"><i class="fa-regular fa-circle"></i> 円を追加</button>
           </div>
           
           <div class="tab-content" id="shapes">
@@ -197,8 +228,8 @@
         </div>
 
         <div class="panel-section">
-            <input type="file" id="import-file" accept=".json" style="display: none;">
-            <h2>レイヤー<button id="import-button" class="icon-button" title="レイヤーデータインポート"><i class="fas fa-upload"></i></button></h2>
+          <h2>レイヤー <input type="file" id="import-file" accept=".json" style="display: none;">
+              <button id="import-button" class="icon-button" title="レイヤーデータインポート"><i class="fas fa-upload"></i></button></h2>
           <div id="layers-list" class="layers-list"></div>
         </div>
         
@@ -231,13 +262,6 @@
         <input type="range" id="normal-map-intensity" min="1" max="10" value="5">
         </div>
         <button id="export-button" class="action-button"><i class="fas fa-download"></i> ダウンロード</button>
-
-        <!--
-        <div class="import-container">
-        <input type="file" id="import-file" accept=".json" style="display: none;">
-        <button id="import-button" class="action-button secondary"><i class="fas fa-upload"></i> レイヤーデータインポート</button>
-        </div>
-        -->
         </div>
       </div>
     </main>
