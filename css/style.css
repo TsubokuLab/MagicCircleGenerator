@@ -145,7 +145,7 @@ body {
   display: flex;
   justify-content: center;
   position: relative;
-  padding: 0 20px 0px 20px; /* 下部のパディングを増やす */
+  padding: 0px;
 }
 
 /* 見出しとボタンを一緒に配置するためのスタイル */
