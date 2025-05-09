@@ -495,9 +495,12 @@ const LayerManager = {
     const layersList = document.getElementById('layers-list');
     layersList.innerHTML = '';
     
+    // ゴーストレイヤーを除外したレイヤー配列を取得
+    const visibleLayers = app.layers.filter(layer => !layer.isGhost);
+    
     // レイヤーを逆順に表示（上に表示されるものが先）
-    for (let i = app.layers.length - 1; i >= 0; i--) {
-      const layer = app.layers[i];
+    for (let i = visibleLayers.length - 1; i >= 0; i--) {
+      const layer = visibleLayers[i];
       const layerItem = document.createElement('div');
       layerItem.className = 'layer-item';
       
@@ -1276,6 +1279,26 @@ function getPreviewParams(type, paramName, value) {
 
 // DOM要素のイベント設定
 function setupEventListeners() {
+  // クレジットコピーボタン
+  document.getElementById('copy-credit').addEventListener('click', function() {
+    const creditText = document.getElementById('credit-text').textContent;
+    navigator.clipboard.writeText(creditText).then(function() {
+      // コピー成功時の処理
+      const button = document.getElementById('copy-credit');
+      const originalIcon = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-check"></i>'; // アイコンを変更
+      button.style.color = '#4CAF50'; // 色を緑に変更
+      
+      // 2秒後に元に戻す
+      setTimeout(function() {
+        button.innerHTML = originalIcon;
+        button.style.color = '';
+      }, 2000);
+    }).catch(function(err) {
+      console.error('クリップボードへのコピーに失敗しました', err);
+    });
+  });
+  
   // ゴーストガイド設定
   setupGhostGuide('circle', 'radius', 'circle-radius-slider');
   setupGhostGuide('circle', 'thickness', 'circle-thickness-slider');

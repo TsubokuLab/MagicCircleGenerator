@@ -1,4 +1,7 @@
-/* シェアボタン */
+.terms-container ul {
+  margin-left: 25px;
+  margin-bottom: 15px;
+}/* シェアボタン */
 .share-button {
   position: absolute;
   right: 0px;
@@ -520,6 +523,89 @@ main {
   color: #3f51b5;
 }
 
+/* フッター */
+.footer {
+  margin-top: 40px;
+  padding: 30px 0;
+  color: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.footer h3 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(150, 150, 255, 0.3);
+}
+
+.footer h4 {
+  font-size: 1.1rem;
+  margin: 20px 0 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(170, 200, 255, 1);
+}
+
+.terms-container {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 20px rgba(100, 100, 255, 0.1) inset;
+  backdrop-filter: blur(4px);
+  margin-bottom: 20px;
+}
+
+.terms-container p,
+.terms-container li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+  font-size: 0.95rem; /* 文字サイズを小さく調整 */
+}
+
+.terms-container ul {
+  margin-left: 25px;
+  margin-bottom: 15px;
+}
+
+.terms-container code {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: auto;
+  max-width: 100%;
+  display: inline-block;
+  margin: 3px 0;
+  vertical-align: middle; /* 垂直方向の配置を修正 */
+}
+
+.copyright {
+  text-align: center;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 30px;
+}
+
+.copyright a {
+  color: rgba(170, 200, 255, 0.9);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.copyright a:hover {
+  color: rgba(200, 220, 255, 1);
+  text-shadow: 0 0 8px rgba(100, 150, 255, 0.5);
+}
+
 /* レスポンシブ対応 */
 @media (max-width: 1200px) {
   main {
@@ -534,5 +620,100 @@ main {
   
   .canvas-container {
     height: 600px;
+  }
+}
+
+/* タブレット対応 */
+@media (max-width: 768px) {
+  .title-text h1 {
+    font-size: 2rem;
+  }
+  
+  .canvas-container {
+    height: 450px;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+  }
+  
+  .action-button {
+    font-size: 0.9rem;
+  }
+}
+
+/* スマートフォン対応 */
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .title-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .title-text h1 {
+    font-size: 1.5rem;
+    margin-top: 5px;
+  }
+  
+  .control-panel, .layer-panel {
+    padding: 10px;
+  }
+  
+  .panel-section h2 {
+    font-size: 1.1rem;
+  }
+  
+  .slider-container {
+    flex-wrap: wrap;
+  }
+  
+  .slider {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+  
+  .tab-button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .canvas-container {
+    height: 350px;
+  }
+  
+  /* タッチ操作の改善 */
+  .slider::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .form-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .layer-actions button {
+    padding: 5px 8px;
+    font-size: 1rem;
+  }
+}
+
+/* タッチデバイスのタップ領域の改善 */
+@media (pointer: coarse) {
+  .form-group select, 
+  .action-button, 
+  .tab-button,
+  .layer-visibility,
+  .layer-actions button {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
