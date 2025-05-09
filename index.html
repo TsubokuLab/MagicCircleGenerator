@@ -3,13 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>魔法陣ジェネレーター</title>
+  <title>魔法陣ジェネレーター by kohack_v</title>
+  
+  <!-- SEO対策 -->
+  <meta name="description" content="ブラウザ上で魔法陣を作成できるオンラインツール。図形を自由に配置し、PNG、SVG、ノーマルマップとしてエクスポート可能。">
+  <meta name="keywords" content="魔法陣, ジェネレーター, オンライン, SVG, 画像作成, デザイン, テクスチャ">
+  <meta name="author" content="kohack_v">
+  <meta name="google-adsense-account" content="ca-pub-6570897144346563">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6570897144346563" crossorigin="anonymous"></script>
+
+  <!-- OGP設定 -->
+  <meta property="og:title" content="魔法陣ジェネレーター by kohack_v">
+  <meta property="og:description" content="ブラウザ上で魔法陣を作成できるオンラインツール。PNG、SVG出力対応。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tsubokulab.github.io/MagicCircleGenerator/">
+  <meta property="og:image" content="https://tsubokulab.github.io/MagicCircleGenerator/img/thumbnail.png">
+  <meta property="og:site_name" content="魔法陣ジェネレーター by kohack_v">
+  
+  <!-- Twitter Card設定 -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@kohack_v">
+  <meta name="twitter:creator" content="@kohack_v">
+  <meta name="twitter:title" content="魔法陣ジェネレーター by kohack_v">
+  <meta name="twitter:description" content="ブラウザ上で魔法陣を作成できるオンラインツール。PNG、SVG出力対応。">
+  <meta name="twitter:image" content="https://tsubokulab.github.io/MagicCircleGenerator/img/thumbnail.png">
+  
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>魔法陣ジェネレーター</h1>
+      <div class="title-container">
+        <div class="title-content">
+          <img src="img/favicon_128x128.png" alt="魔法陣ジェネレーター" class="title-icon">
+          <div class="title-text">
+            <h1>魔法陣ジェネレーター</h1>
+            <div class="subtitle-row">
+              <a href="https://x.com/kohack_v" target="_blank" class="author-link">by kohack_v</a>
+            </div>
+          </div>
+        </div>
+        <div class="share-button">
+          <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" data-url="https://tsubokulab.github.io/MagicCircleGenerator/" target="_blank" class="twitter-share-button" data-show-count="false" data-size="large">ポスト</a>
+        </div>
+      </div>
     </header>
     
     <main>
@@ -63,7 +102,7 @@
                 <option value="dotted">点線</option>
               </select>
             </div>
-            <button id="add-circle" class="action-button">円を追加</button>
+            <button id="add-circle" class="action-button"><i class="fa-regular fa-circle"></i> 円を追加</button>
           </div>
           
           <div class="tab-content" id="shapes">
@@ -128,7 +167,8 @@
                 <option value="both">両方</option>
               </select>
             </div>
-            <button id="add-shapes" class="action-button">図形を追加</button>
+            <button id="add-shapes" class="action-button"><i class="fas fa-shapes"></i> 図形を追加</button>
+
           </div>
           
           <div class="tab-content" id="lines">
@@ -176,7 +216,8 @@
               <input type="number" id="star-factor" value="2" min="1" max="10" step="0.1" class="slider-value">
             </div>
             </div>
-            <button id="add-lines" class="action-button">線を追加</button>
+            <button id="add-lines" class="action-button"><i class="fas fa-project-diagram"></i> 線を追加</button>
+
           </div>
         </div>
       </div>
@@ -188,18 +229,19 @@
       <div class="layer-panel">
         <div class="panel-section">
           <div class="button-group">
-            <button id="random-button" class="action-button primary">ランダム生成</button>
-            <button id="reset-button" class="action-button secondary">リセット</button>
+          <button id="random-button" class="action-button primary"><i class="fas fa-shuffle"></i> ランダム</button>
+          <button id="reset-button" class="action-button secondary"><i class="fas fa-trash-alt"></i> クリア</button>
           </div>
         </div>
 
         <div class="panel-section">
-          <h2>レイヤー</h2>
+          <h2>レイヤー <input type="file" id="import-file" accept=".json" style="display: none;">
+              <button id="import-button" class="icon-button" title="レイヤーデータインポート"><i class="fas fa-upload"></i></button></h2>
           <div id="layers-list" class="layers-list"></div>
         </div>
         
         <div class="panel-section">
-        <h2>エクスポート</h2>
+        <h2>ダウンロード</h2>
         <div class="form-group">
         <label for="export-format">フォーマット:</label>
         <select id="export-format">
@@ -226,17 +268,41 @@
         <label for="normal-map-intensity">ノーマルマップ強度:</label>
         <input type="range" id="normal-map-intensity" min="1" max="10" value="5">
         </div>
-        <button id="export-button" class="action-button">エクスポート</button>
-        <div class="import-container">
-        <input type="file" id="import-file" accept=".json" style="display: none;">
-        <button id="import-button" class="action-button secondary">レイヤーデータインポート</button>
-        </div>
+        <button id="export-button" class="action-button"><i class="fas fa-download"></i> ダウンロード</button>
         </div>
       </div>
     </main>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <h3>利用規約</h3>
+        <div class="terms-container">
+          <p>本ツール「魔法陣ジェネレーター」で生成した素材の利用にあたっては、以下の利用規約に同意したものとみなします。</p>
+          
+          <h4>素材の利用について</h4>
+          <ul>
+            <li>生成した魔法陣の画像・データは、自由に改変・再配布することが可能です。</li>
+            <li>個人利用に限り、商用利用も許可します。例えば、ゲームやアプリ、ウェブサイト、イラストなどの一部として利用することができます。</li>
+            <li>ただし、生成した魔法陣自体を主な商品として販売すること（例：魔法陣画像集の販売やデジタルコンテンツとしての販売など）は禁止します。</li>
+            <li>生成した素材を使用した作品やコンテンツにおいては、クレジットに表記いただけますと幸いです（任意）<br>表記例：<code id="credit-text">魔法陣ジェネレーター by kohack_v | https://tsubokulab.github.io/MagicCircleGenerator/</code> <button id="copy-credit" class="icon-button" title="クレジットをコピー"><i class="fas fa-copy"></i></button></li>
+          </ul>
+
+          <h4>免責事項</h4>
+          <ul>
+            <li>作者（kohack_v）は、本ツールの利用により生じたいかなる損害に対しても、一切の責任を負いません。</li>
+            <li>本ツールで生成されたコンテンツの使用に関する責任は、全てユーザー自身にあります。</li>
+          </ul>
+
+          <h4>利用規約の変更</h4>
+          <p>本利用規約は予告なしに変更される場合があります。</p>
+        </div>
+        <p class="copyright">&copy; 2025 <a href="https://x.com/kohack_v" target="_blank">kohack_v</a>. All rights reserved.</p>
+      </div>
+    </footer>
   </div>
   
   <script src="js/FileSaver.min.js"></script>
   <script src="js/main.js"></script>
+  <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </body>
 </html>

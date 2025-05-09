@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SVG to PNG Converter</title>
+</head>
+<body>
+  <h1>SVG to PNG Converter</h1>
+  <p>このページは、SVGをPNGに変換するために使います。ブラウザで開き、コンソールで変換処理を実行してください。</p>
+  
+  <img id="svg-image" src="thumbnail.svg" style="display:none">
+  <canvas id="canvas" width="1200" height="628"></canvas>
+  
+  <script>
+    window.onload = function() {
+      const img = document.getElementById('svg-image');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+        
+        // Canvas をPNGに変換
+        const pngUrl = canvas.toDataURL('image/png');
+        
+        // ダウンロードリンクを作成
+        const link = document.createElement('a');
+        link.download = 'thumbnail.png';
+        link.href = pngUrl;
+        link.textContent = 'ここをクリックしてPNGをダウンロード';
+        document.body.appendChild(link);
+        
+        console.log('変換完了：ダウンロードリンクをクリックしてください');
+      };
+    };
+  </script>
+</body>
+</html>

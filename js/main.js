@@ -1,64 +1,4 @@
-  // インポートボタン
-  document.getElementById('import-button').addEventListener('click', () => {
-    document.getElementById('import-file').click();
-  });
-  
-  // ファイル選択時の処理
-  document.getElementById('import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      const success = importLayersFromJSON(event.target.result);
-      if (success) {
-        //alert('レイヤーデータのインポートが完了しました。');
-      } else {
-        alert('レイヤーデータのインポート中にエラーが発生しました。');
-      }
-      // ファイル入力をリセット
-      e.target.value = '';
-    };
-    reader.readAsText(file);
-  });// レイヤーデータのインポート
-function importLayersFromJSON(jsonData) {
-  try {
-    const data = JSON.parse(jsonData);
-    
-    // 設定をインポート
-    if (data.settings) {
-      app.settings = { ...data.settings };
-      
-      // UIのカラーピッカーとチェックボックスを更新
-      document.getElementById('background-color').value = app.settings.backgroundColor;
-      document.getElementById('foreground-color').value = app.settings.foregroundColor;
-      document.getElementById('transparent-background').checked = app.settings.transparentBackground;
-    }
-    
-    // レイヤーをインポート
-    if (data.layers && Array.isArray(data.layers)) {
-      // 既存のレイヤーをクリア
-      app.layers = [];
-      app.nextLayerId = 0;
-      
-      // 新しいレイヤーを追加
-      data.layers.forEach(layerData => {
-        LayerManager.addLayer(layerData.type, layerData.params);
-      });
-      
-      // レイヤーリストを更新
-      LayerManager.updateLayersList();
-    }
-    
-    // キャンバスを再描画
-    renderCanvas();
-    
-    return true;
-  } catch (error) {
-    console.error('JSONファイルのインポートエラー:', error);
-    return false;
-  }
-}/**
+/**
  * 魔法陣ジェネレーター
  * ブラウザで動作する魔法陣作成ツール
  */
@@ -84,7 +24,6 @@ const app = {
 function importLayersFromJSON(jsonData) {
   try {
     const data = JSON.parse(jsonData);
-    
     // 設定をインポート
     if (data.settings) {
       // 基本設定を上書き
@@ -99,8 +38,8 @@ function importLayersFromJSON(jsonData) {
     // レイヤーをインポート
     if (data.layers && Array.isArray(data.layers)) {
       // 既存のレイヤーをクリア
-      app.layers = [];
-      app.nextLayerId = 0;
+      // app.layers = [];
+      // app.nextLayerId = 0;
       
       // 新しいレイヤーを追加
       data.layers.forEach(layerData => {
@@ -152,26 +91,27 @@ class Layer {
     this.isGhost = false; // ゴーストガイド表示用フラグ
   }
   
-  render(ctx, customCanvas) {
+  render(ctx, customCanvas, scaleFactor) {
     if (!this.visible) return;
     
     // カスタムキャンバスが指定されていない場合はデフォルトのキャンバスを使用
     const canvas = customCanvas || app.canvas;
-    
+    const _scale = scaleFactor || 1;
+
     switch(this.type) {
       case 'circle':
-        this.renderCircle(ctx, canvas);
+        this.renderCircle(ctx, canvas, _scale);
         break;
       case 'shapes':
-        this.renderShapes(ctx, canvas);
+        this.renderShapes(ctx, canvas, _scale);
         break;
       case 'lines':
-        this.renderLines(ctx, canvas);
+        this.renderLines(ctx, canvas, _scale);
         break;
     }
   }
   
-  renderCircle(ctx, canvas) {
+  renderCircle(ctx, canvas, scaleFactor) {
     const { radius, thickness, style, color } = this.params;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -179,12 +119,12 @@ class Layer {
     const actualRadius = radius * maxRadius;
     
     ctx.strokeStyle = color;
-    ctx.lineWidth = thickness;
-    
+    ctx.lineWidth = thickness * scaleFactor;
+
     if (style === 'dashed') {
-      ctx.setLineDash([10, 5]);
+      ctx.setLineDash([10 * scaleFactor, 5 * scaleFactor]);
     } else if (style === 'dotted') {
-      ctx.setLineDash([2, 5]);
+      ctx.setLineDash([2 * scaleFactor, 5 * scaleFactor]);
     } else {
       ctx.setLineDash([]);
     }
@@ -195,7 +135,7 @@ class Layer {
     ctx.setLineDash([]);
   }
   
-  renderShapes(ctx, canvas) {
+  renderShapes(ctx, canvas, scaleFactor) {
     const {
       shapeType, size, count, radius, offset, fill, color, rotation = 0, aspect = 1
     } = this.params;
@@ -395,7 +335,7 @@ class Layer {
     ctx.restore();
   }
   
-  renderLines(ctx, canvas) {
+  renderLines(ctx, canvas, scaleFactor) {
     const { 
       lineType, count, radius, thickness, offset, color, starFactor 
     } = this.params;
@@ -406,7 +346,7 @@ class Layer {
     const actualRadius = radius * maxRadius;
     
     ctx.strokeStyle = color;
-    ctx.lineWidth = thickness;
+    ctx.lineWidth = thickness * scaleFactor;
     
     switch(lineType) {
       case 'radial':
@@ -555,9 +495,12 @@ const LayerManager = {
     const layersList = document.getElementById('layers-list');
     layersList.innerHTML = '';
     
+    // ゴーストレイヤーを除外したレイヤー配列を取得
+    const visibleLayers = app.layers.filter(layer => !layer.isGhost);
+    
     // レイヤーを逆順に表示（上に表示されるものが先）
-    for (let i = app.layers.length - 1; i >= 0; i--) {
-      const layer = app.layers[i];
+    for (let i = visibleLayers.length - 1; i >= 0; i--) {
+      const layer = visibleLayers[i];
       const layerItem = document.createElement('div');
       layerItem.className = 'layer-item';
       
@@ -669,29 +612,31 @@ function renderCanvas() {
   // 正方形に保つため、小さい方のサイズを使用
   const size = Math.min(containerWidth, containerHeight) - 40; // 余白用に少し小さく
   
+  const scaleFactor = size / BASE_CANVAS_SIZE;
+
   app.canvas.width = size;
   app.canvas.height = size;
-  
+
   // 背景クリア
   if (app.settings.transparentBackground) {
     // 透過背景の場合は完全にクリア
     app.ctx.clearRect(0, 0, app.canvas.width, app.canvas.height);
-    
-    // キャンバスの背景にチェック柄パターンを表示
+
+    // 背景にチェック柄パターンを表示
     // キャンバスのコンテナにクラスを追加
-    container.classList.add('transparent-bg');
+    app.canvas.classList.add('transparent-bg');
   } else {
     // 背景色を設定
     app.ctx.fillStyle = app.settings.backgroundColor;
     app.ctx.fillRect(0, 0, app.canvas.width, app.canvas.height);
     
     // チェック柄クラスを削除
-    container.classList.remove('transparent-bg');
+    app.canvas.classList.remove('transparent-bg');
   }
   
   // レイヤー描画
   app.layers.forEach(layer => {
-    layer.render(app.ctx);
+    layer.render(app.ctx, app.canvas, scaleFactor);
   });
 }
 
@@ -722,6 +667,7 @@ const Exporter = {
     
     // スケール係数を計算（1024pxを基準とする）
     const scaleFactor = textureSize / BASE_CANVAS_SIZE;
+    console.log("[ exportTexture ] scaleFactor: " + scaleFactor);
     
     // 背景色を設定（透過設定がオフの場合のみ）
     if (!app.settings.transparentBackground) {
@@ -736,12 +682,12 @@ const Exporter = {
       
       // 線の太さをスケーリング
       if (tempLayer.params.thickness) {
-        tempLayer.params.thickness = Math.max(1, Math.round(tempLayer.params.thickness * scaleFactor));
+        tempLayer.params.thickness = Math.max(1, Math.round(tempLayer.params.thickness));
       }
-      
+
       // ローカルなキャンバスサイズを設定
       const tempCanvas = { width: textureSize, height: textureSize };
-      tempLayer.render(exportCtx, tempCanvas);
+      tempLayer.render(exportCtx, tempCanvas, scaleFactor);
     });
     
     switch(format) {
@@ -849,9 +795,9 @@ createCircleSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
   circle.setAttribute('stroke-width', Math.max(1, thickness * scaleFactor));
   
   if (style === 'dashed') {
-    circle.setAttribute('stroke-dasharray', '10,5');
+    circle.setAttribute('stroke-dasharray', 10 * scaleFactor + ',' + 5 * scaleFactor);
   } else if (style === 'dotted') {
-    circle.setAttribute('stroke-dasharray', '2,5');
+    circle.setAttribute('stroke-dasharray', 2 * scaleFactor + ',' + 5 * scaleFactor);
   }
   
   return circle;
@@ -1177,7 +1123,7 @@ function hideGhostGuide() {
   if (ghostLayers.length > 0) {
     // アニメーションフレーム用変数を初期化
     let fadeOpacity = 0.5;
-    const fadeInterval = 0.05;
+    const fadeInterval = 0.01;
     const fadeStep = 20; // ミリ秒
     
     // フェードアウトのアニメーション関数
@@ -1186,7 +1132,7 @@ function hideGhostGuide() {
       
       if (fadeOpacity <= 0) {
         // アニメーション終了: ゴーストレイヤーを削除
-        app.layers = app.layers.filter(layer => !layer.isGhost);
+        //app.layers = app.layers.filter(layer => !layer.isGhost);
         renderCanvas();
         return;
       }
@@ -1194,14 +1140,11 @@ function hideGhostGuide() {
       // ゴーストレイヤーの色のアルファ値を更新
       ghostLayers.forEach(layer => {
         // 既存の色情報から新しいRGBA文字列を生成
-        const colorRGB = layer.params.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
-        if (colorRGB) {
-          // RGBA形式の場合
-          layer.params.color = `rgba(${colorRGB[1]}, ${colorRGB[2]}, ${colorRGB[3]}, ${fadeOpacity})`;
-        } else {
-          // Hex形式やその他の形式の場合は直接RGBA形式に変換
-          layer.params.color = `rgba(255, 255, 255, ${fadeOpacity})`;
-        }
+        const colorRGB = layer.params.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+
+        var _alpha = colorRGB[4];
+        _alpha -= fadeInterval;
+        layer.params.color = `rgba(255, 255, 255, ${_alpha})`;
       });
       
       // レイヤーを再描画
@@ -1214,116 +1157,6 @@ function hideGhostGuide() {
     // アニメーションを開始
     fadeAnimation();
   }
-}
-
-// スライダーとフィールドを連動させる関数
-function syncSliderAndField(sliderId, fieldId, paramType) {
-  const slider = document.getElementById(sliderId);
-  if(slider == null) return;
-  
-  // スライダー入力イベント
-  /*
-  slider.addEventListener('input', () => {
-    field.value = slider.value;
-
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(slider.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0]; // 例: circle, shape, line
-    
-    // 現在のパラメータを取得
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-  });
-  */
-  
-  // スライダー変更完了イベント（mouseupなど）
-  /*
-  slider.addEventListener('change', () => {
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(slider.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0]; // 例: circle, shape, line
-    
-    // 現在のパラメータを取得
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-
-    // タイマーをセットして2秒後に非表示
-    ghostGuideTimer = setTimeout(() => {
-      hideGhostGuide();
-      ghostGuideTimer = null;
-    }, 2000);
-  });
-  */
-  
-  const field = document.getElementById(fieldId);
-  if(field == null){
-    console.error( field_id + ' is null.');
-    return;
-  }
-
-  // 数値入力フィールド入力イベント（リアルタイム反映のため）
-  /*
-  field.addEventListener('input', () => {
-    slider.value = field.value;
-    
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(field.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0];
-    
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-
-    // タイマーをセットして2秒後に非表示
-    ghostGuideTimer = setTimeout(() => {
-      hideGhostGuide();
-      ghostGuideTimer = null;
-    }, 2000);
-  });
-  */
-
-  // 数値入力フィールド入力イベント
-  /*
-  field.addEventListener('change', () => {
-    slider.value = field.value;
-    
-    // 既存のタイマーをクリア
-    if (ghostGuideTimer) {
-      clearTimeout(ghostGuideTimer);
-    }
-    
-    // ガイド表示更新
-    const value = parseFloat(field.value);
-    const paramName = paramType || fieldId.replace('-slider', '').replace('-', '_');
-    const tabName = fieldId.split('-')[0];
-    
-    const params = getPreviewParams(tabName, paramName, value);
-    showGhostGuide(params);
-    
-    // タイマーをセットして2秒後に非表示
-    ghostGuideTimer = setTimeout(() => {
-      hideGhostGuide();
-      ghostGuideTimer = null;
-    }, 2000);
-  });
-  */
 }
 
 // スライダードラッグ中にゴーストガイドを表示する関数
@@ -1342,6 +1175,11 @@ function setupGhostGuide(type, paramName, sliderId) {
     // 現在のパラメータを取得
     const params = getPreviewParams(type, paramName, value);
     
+    // 既存のタイマーをクリア
+    if (ghostGuideTimer) {
+      clearTimeout(ghostGuideTimer);
+    }
+
     // ゴーストガイド表示
     showGhostGuide(params);
   });
@@ -1439,24 +1277,27 @@ function getPreviewParams(type, paramName, value) {
   return params;
 }
 
-// タブ内のイベントハンドラを設定（再利用可能にした）
-function setupTabEventListeners(){
-  // スライダーと入力フィールドの連動設定
-  syncSliderAndField('circle-radius-slider', 'circle-radius');
-  syncSliderAndField('circle-thickness-slider', 'circle-thickness');
-  //syncSliderAndField('circle-style', 'circle-style');
-  //syncSliderAndField('shape-type', 'shape-type');
-  syncSliderAndField('shape-size-slider', 'shape-size');
-  syncSliderAndField('shape-count-slider', 'shape-count');
-  syncSliderAndField('shape-radius-slider', 'shape-radius');
-  syncSliderAndField('shape-offset-slider', 'shape-offset');
-  syncSliderAndField('shape-rotation-slider', 'shape-rotation');
-  syncSliderAndField('shape-aspect-slider', 'shape-aspect');
-  syncSliderAndField('line-count-slider', 'line-count');
-  syncSliderAndField('line-radius-slider', 'line-radius');
-  syncSliderAndField('line-thickness-slider', 'line-thickness');
-  syncSliderAndField('line-offset-slider', 'line-offset');
-  syncSliderAndField('star-factor-slider', 'star-factor');
+// DOM要素のイベント設定
+function setupEventListeners() {
+  // クレジットコピーボタン
+  document.getElementById('copy-credit').addEventListener('click', function() {
+    const creditText = document.getElementById('credit-text').textContent;
+    navigator.clipboard.writeText(creditText).then(function() {
+      // コピー成功時の処理
+      const button = document.getElementById('copy-credit');
+      const originalIcon = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-check"></i>'; // アイコンを変更
+      button.style.color = '#4CAF50'; // 色を緑に変更
+      
+      // 2秒後に元に戻す
+      setTimeout(function() {
+        button.innerHTML = originalIcon;
+        button.style.color = '';
+      }, 2000);
+    }).catch(function(err) {
+      console.error('クリップボードへのコピーに失敗しました', err);
+    });
+  });
   
   // ゴーストガイド設定
   setupGhostGuide('circle', 'radius', 'circle-radius-slider');
@@ -1476,11 +1317,6 @@ function setupTabEventListeners(){
   setupGhostGuide('lines', 'thickness', 'line-thickness-slider');
   setupGhostGuide('lines', 'offset', 'line-offset-slider');
   setupGhostGuide('lines', 'starFactor', 'star-factor-slider');
-}
-
-// DOM要素のイベント設定
-function setupEventListeners() {
-  setupTabEventListeners();
 
   // タブ切り替え
   document.querySelectorAll('.tab-button').forEach(button => {
@@ -1497,11 +1333,6 @@ function setupEventListeners() {
         content.classList.remove('active');
       });
       document.getElementById(tabId).classList.add('active');
-
-      // タブイベントを再登録
-      setTimeout(() => {
-        setupTabEventListeners();
-      }, 500);
     });
   });
   
@@ -1609,13 +1440,7 @@ function setupEventListeners() {
   
   // リセットボタン
   document.getElementById('reset-button').addEventListener('click', () => {
-    if (confirm('すべてのレイヤーをクリアしますか？')) {
-      app.layers = [];
-      app.activeLayer = null;
-      app.nextLayerId = 0;
-      LayerManager.updateLayersList();
-      renderCanvas();
-    }
+    clearAll();
   });
   
   // ランダム生成ボタン
@@ -1728,11 +1553,23 @@ function resizeCanvas() {
   renderCanvas();
 }
 
+function clearAll(){
+  if (confirm('すべてのレイヤーをクリアしますか？')) {
+      app.layers = [];
+      app.activeLayer = null;
+      app.nextLayerId = 0;
+      LayerManager.updateLayersList();
+      renderCanvas();
+  }else{
+
+  }
+}
+
 var json_string = {
   "settings": {
     "backgroundColor": "#000000",
     "foregroundColor": "#ffffff",
-    "transparentBackground": true
+    "transparentBackground": false
   },
   "layers": [
     {
@@ -1957,6 +1794,10 @@ function init() {
     
     const reader = new FileReader();
     reader.onload = function(event) {
+
+      // 既存レイヤーを削除するかの確認
+      clearAll();
+
       const success = importLayersFromJSON(event.target.result);
       if (success) {
         //alert('レイヤーデータのインポートが完了しました。');

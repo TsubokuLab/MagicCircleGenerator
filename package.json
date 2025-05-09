@@ -11,7 +11,7 @@
   "author": "Teruaki Tsubokura",
   "license": "ISC",
   "devDependencies": {
-    "gh-pages": "^x.x.x"
+    "gh-pages": "^6.3.0"
   },
   "description": "魔法陣ジェネレーター by kohack_v"
 }
