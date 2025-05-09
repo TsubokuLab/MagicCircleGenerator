@@ -251,7 +251,7 @@ class Layer {
     ctx.rotate(Utils.degToRad(angle + rotation - 90));
     
     const width = size;
-    const height = size * aspect;
+    const height = size / aspect;
     
     ctx.beginPath();
     // 上向きの三角形（▲）
@@ -852,7 +852,7 @@ createShapesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
         
       case 'triangle':
         shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        const height = actualSize * aspect;
+        const height = actualSize / aspect;
         const points = [
           [0, -height / 2],
           [-actualSize / 2, height / 2],
