@@ -112,7 +112,7 @@ class Layer {
   }
   
   renderCircle(ctx, canvas, scaleFactor) {
-    const { radius, thickness, style, color } = this.params;
+    const { radius, thickness, style, color, dashLength = 10, dashGap = 5 } = this.params;
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
     const maxRadius = Math.min(canvas.width, canvas.height) / 2;
@@ -122,10 +122,13 @@ class Layer {
     ctx.lineWidth = thickness * scaleFactor;
 
     if (style === 'dashed') {
-      ctx.setLineDash([10 * scaleFactor, 5 * scaleFactor]);
+      ctx.lineCap = "butt";
+      ctx.setLineDash([dashLength * scaleFactor, dashGap * scaleFactor]);
     } else if (style === 'dotted') {
-      ctx.setLineDash([2 * scaleFactor, 5 * scaleFactor]);
+      ctx.lineCap = "round";
+      ctx.setLineDash([0, dashGap * scaleFactor]);
     } else {
+      ctx.lineCap = "butt";
       ctx.setLineDash([]);
     }
     
@@ -137,7 +140,7 @@ class Layer {
   
   renderShapes(ctx, canvas, scaleFactor) {
     const {
-      shapeType, size, count, radius, offset, fill, color, rotation = 0, aspect = 1
+      shapeType, size, count, radius, offset, fill, color, rotation = 0, aspect = 1, lineThickness = 1
     } = this.params;
     
     const centerX = canvas.width / 2;
@@ -147,11 +150,13 @@ class Layer {
     const actualSize = size * maxRadius;
     
     for (let i = 0; i < count; i++) {
-      const angle = (i * 360 / count) + offset;
+      // 角度計算を上側(-90度)から始めるように調整
+      const angle = (i * 360 / count) + offset - 90;
       const pos = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
       
       ctx.fillStyle = color;
       ctx.strokeStyle = color;
+      ctx.lineWidth = lineThickness * scaleFactor;
       
       switch(shapeType) {
         case 'circle':
@@ -180,11 +185,11 @@ class Layer {
     ctx.beginPath();
     ctx.arc(x, y, size / 2, 0, Math.PI * 2);
     
-    if (fill === 'fill' || fill === 'both') {
+    if (fill === 'fill') {
       ctx.fill();
     }
     
-    if (fill === 'stroke' || fill === 'both') {
+    if (fill === 'stroke') {
       ctx.stroke();
     }
   }
@@ -197,7 +202,7 @@ class Layer {
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, startAngle, endAngle);
     
-    if (fill === 'fill' || fill === 'both') {
+    if (fill === 'fill') {
       // 弧を塗りつぶす場合、中心に線を引く必要がある
       const start = Utils.polarToCartesian(centerX, centerY, radius, angle - size / 2);
       const end = Utils.polarToCartesian(centerX, centerY, radius, angle + size / 2);
@@ -206,7 +211,7 @@ class Layer {
       ctx.fill();
     }
     
-    if (fill === 'stroke' || fill === 'both') {
+    if (fill === 'stroke') {
       ctx.stroke();
     }
   }
@@ -219,16 +224,17 @@ class Layer {
     ctx.save();
     ctx.translate(x, y);
     // 角度オフセットに加えて図形自体の回転を適用
-    ctx.rotate(Utils.degToRad(angle + rotation));
+    // 初期値は上向きにするため、-90度回転させる
+    ctx.rotate(Utils.degToRad(angle + rotation - 90));
     
     ctx.beginPath();
     ctx.rect(-halfWidth, -halfHeight, halfWidth * 2, halfHeight * 2);
     
-    if (fill === 'fill' || fill === 'both') {
+    if (fill === 'fill') {
       ctx.fill();
     }
     
-    if (fill === 'stroke' || fill === 'both') {
+    if (fill === 'stroke') {
       ctx.stroke();
     }
     
@@ -254,11 +260,11 @@ class Layer {
     ctx.lineTo(width / 2, height / 2);
     ctx.closePath();
     
-    if (fill === 'fill' || fill === 'both') {
+    if (fill === 'fill') {
       ctx.fill();
     }
     
-    if (fill === 'stroke' || fill === 'both') {
+    if (fill === 'stroke') {
       ctx.stroke();
     }
     
@@ -271,7 +277,8 @@ class Layer {
     ctx.save();
     ctx.translate(x, y);
     // 角度オフセットに加えて図形自体の回転を適用
-    ctx.rotate(Utils.degToRad(angle + rotation));
+    // 初期値は上向きにするため、-90度回転させる
+    ctx.rotate(Utils.degToRad(angle + rotation - 90));
     
     const halfWidth = size / 2;
     const halfHeight = size / (2 * aspect);
@@ -283,11 +290,11 @@ class Layer {
     ctx.lineTo(-halfWidth, 0);
     ctx.closePath();
     
-    if (fill === 'fill' || fill === 'both') {
+    if (fill === 'fill') {
       ctx.fill();
     }
     
-    if (fill === 'stroke' || fill === 'both') {
+    if (fill === 'stroke') {
       ctx.stroke();
     }
     
@@ -303,6 +310,7 @@ class Layer {
     ctx.save();
     ctx.translate(x, y);
     // 上向きの星形になるように角度を調整し、さらに回転を適用
+    // 初期値は上向きにするため、-90度回転させる
     ctx.rotate(Utils.degToRad(angle + rotation - 90));
     // アスペクト比を適用
     ctx.scale(1, 1/aspect);
@@ -311,10 +319,11 @@ class Layer {
     
     for (let i = 0; i < spikes * 2; i++) {
       const radius = i % 2 === 0 ? outerRadius : innerRadius;
-      const pointAngle = (i * Math.PI) / spikes;
+      // 星の最初の頂点が上を向くように調整（-Math.PI/2 = -90度）
+      const pointAngle = (i * Math.PI) / spikes - Math.PI/2;
       
       if (i === 0) {
-        ctx.moveTo(radius, 0);
+        ctx.moveTo(radius * Math.cos(pointAngle), radius * Math.sin(pointAngle));
       } else {
         const px = radius * Math.cos(pointAngle);
         const py = radius * Math.sin(pointAngle);
@@ -324,11 +333,11 @@ class Layer {
     
     ctx.closePath();
     
-    if (fill === 'fill' || fill === 'both') {
+    if (fill === 'fill') {
       ctx.fill();
     }
     
-    if (fill === 'stroke' || fill === 'both') {
+    if (fill === 'stroke') {
       ctx.stroke();
     }
     
@@ -366,7 +375,8 @@ class Layer {
   
   drawRadialLines(ctx, centerX, centerY, radius, count, offset) {
     for (let i = 0; i < count; i++) {
-      const angle = (i * 360 / count) + offset;
+      // 角度計算を上側(-90度)から始めるように調整
+      const angle = (i * 360 / count) + offset - 90;
       const end = Utils.polarToCartesian(centerX, centerY, radius, angle);
       
       ctx.beginPath();
@@ -381,7 +391,8 @@ class Layer {
     const points = [];
     
     for (let i = 0; i < count; i++) {
-      const angle = (i * 360 / count) + offset;
+      // 角度計算を上側(-90度)から始めるように調整
+      const angle = (i * 360 / count) + offset - 90;
       points.push(Utils.polarToCartesian(centerX, centerY, radius, angle));
     }
     
@@ -400,7 +411,8 @@ class Layer {
     ctx.beginPath();
     
     for (let i = 0; i < count; i++) {
-      const angle = (i * 360 / count) + offset;
+      // 角度計算を上側(-90度)から始めるように調整
+      const angle = (i * 360 / count) + offset - 90;
       const point = Utils.polarToCartesian(centerX, centerY, radius, angle);
       
       if (i === 0) {
@@ -421,7 +433,8 @@ class Layer {
     ctx.beginPath();
     
     for (let i = 0; i < count; i++) {
-      const angle = (i * 360 / count) + offset;
+      // 角度計算を上側(-90度)から始めるように調整
+      const angle = (i * 360 / count) + offset - 90;
       const point = Utils.polarToCartesian(centerX, centerY, radius, angle);
       
       if (i === 0) {
@@ -429,7 +442,7 @@ class Layer {
       } else {
         // 星形の次の点はfactor個先
         const nextIndex = (i * factor) % count;
-        const nextAngle = (nextIndex * 360 / count) + offset;
+        const nextAngle = (nextIndex * 360 / count) + offset - 90;
         const nextPoint = Utils.polarToCartesian(centerX, centerY, radius, nextAngle);
         
         ctx.lineTo(nextPoint.x, nextPoint.y);
@@ -783,7 +796,7 @@ createSVGFromLayer: function(layer, size, scaleFactor) {
 
 // 円レイヤーをSVGに変換
 createCircleSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
-  const { radius, thickness, style, color } = layer.params;
+  const { radius, thickness, style, color, dashLength = 10, dashGap = 5 } = layer.params;
   const actualRadius = radius * maxRadius;
   
   const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -795,9 +808,9 @@ createCircleSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
   circle.setAttribute('stroke-width', Math.max(1, thickness * scaleFactor));
   
   if (style === 'dashed') {
-    circle.setAttribute('stroke-dasharray', 10 * scaleFactor + ',' + 5 * scaleFactor);
+    circle.setAttribute('stroke-dasharray', dashLength * scaleFactor + ',' + dashGap * scaleFactor);
   } else if (style === 'dotted') {
-    circle.setAttribute('stroke-dasharray', 2 * scaleFactor + ',' + 5 * scaleFactor);
+    circle.setAttribute('stroke-dasharray', dashLength * scaleFactor + ',' + dashGap * scaleFactor);
   }
   
   return circle;
@@ -805,17 +818,18 @@ createCircleSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
 
 // 図形レイヤーをSVGに変換
 createShapesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
-  const { shapeType, size, count, radius, offset, fill, color, rotation = 0, aspect = 1 } = layer.params;
+  const { shapeType, size, count, radius, offset, fill, color, rotation = 0, aspect = 1, lineThickness = 1 } = layer.params;
   const actualRadius = radius * maxRadius;
   const actualSize = size * maxRadius;
   
   const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  group.setAttribute('fill', fill === 'fill' || fill === 'both' ? color : 'none');
-  group.setAttribute('stroke', fill === 'stroke' || fill === 'both' ? color : 'none');
-  group.setAttribute('stroke-width', Math.max(1, scaleFactor));
+  group.setAttribute('fill', fill === 'fill' ? color : 'none');
+  group.setAttribute('stroke', fill === 'stroke' ? color : 'none');
+  group.setAttribute('stroke-width', Math.max(1, lineThickness * scaleFactor));
   
   for (let i = 0; i < count; i++) {
-    const angle = (i * 360 / count) + offset;
+    // 角度計算を上側(-90度)から始めるように調整
+    const angle = (i * 360 / count) + offset - 90;
     const pos = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
     
     let shape;
@@ -887,7 +901,8 @@ createShapesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
         
         for (let i = 0; i < spikes * 2; i++) {
           const r = i % 2 === 0 ? outerRadius : innerRadius;
-          const a = (i * Math.PI) / spikes;
+          // 星の最初の頂点が上を向くように調整（-Math.PI/2 = -90度）
+          const a = (i * Math.PI) / spikes - Math.PI/2;
           const sx = r * Math.cos(a);
           const sy = r * Math.sin(a);
           starPoints.push([sx, sy]);
@@ -895,7 +910,7 @@ createShapesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
         
         // 星形の回転とアスペクト比を考慮
         const rotatedStarPoints = starPoints.map(point => {
-          const rads = Utils.degToRad(angle + rotation - 90);
+          const rads = Utils.degToRad(angle + rotation);
           const rotX = point[0] * Math.cos(rads) - point[1] * Math.sin(rads);
           const rotY = point[0] * Math.sin(rads) + point[1] * Math.cos(rads) / aspect;
           return [pos.x + rotX, pos.y + rotY];
@@ -927,7 +942,8 @@ createLinesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
   switch(lineType) {
     case 'radial':
       for (let i = 0; i < count; i++) {
-        const angle = (i * 360 / count) + offset;
+        // 角度計算を上側(-90度)から始めるように調整
+        const angle = (i * 360 / count) + offset - 90;
         const end = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
         
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -944,7 +960,8 @@ createLinesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
       // 全ての点を計算
       const points = [];
       for (let i = 0; i < count; i++) {
-        const angle = (i * 360 / count) + offset;
+        // 角度計算を上側(-90度)から始めるように調整
+        const angle = (i * 360 / count) + offset - 90;
         points.push(Utils.polarToCartesian(centerX, centerY, actualRadius, angle));
       }
       
@@ -967,7 +984,8 @@ createLinesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
       let polygonPoints = [];
       
       for (let i = 0; i < count; i++) {
-        const angle = (i * 360 / count) + offset;
+        // 角度計算を上側(-90度)から始めるように調整
+        const angle = (i * 360 / count) + offset - 90;
         const point = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
         polygonPoints.push(`${point.x},${point.y}`);
       }
@@ -985,7 +1003,8 @@ createLinesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
       let pathData = '';
       
       for (let i = 0; i < count; i++) {
-        const angle = (i * 360 / count) + offset;
+        // 角度計算を上側(-90度)から始めるように調整
+        const angle = (i * 360 / count) + offset - 90;
         const point = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
         
         if (i === 0) {
@@ -993,7 +1012,7 @@ createLinesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
         } else {
           // 星形の次の点はfactor個先
           const nextIndex = (i * starFactor) % count;
-          const nextAngle = (nextIndex * 360 / count) + offset;
+          const nextAngle = (nextIndex * 360 / count) + offset - 90;
           const nextPoint = Utils.polarToCartesian(centerX, centerY, actualRadius, nextAngle);
           
           pathData += `L ${nextPoint.x} ${nextPoint.y} `;
@@ -1238,6 +1257,8 @@ function getPreviewParams(type, paramName, value) {
         radius: paramName === 'radius' ? value : parseFloat(document.getElementById('circle-radius').value),
         thickness: paramName === 'thickness' ? value : parseInt(document.getElementById('circle-thickness').value),
         style: document.getElementById('circle-style').value,
+        dashLength: paramName === 'dash-length' ? value : parseInt(document.getElementById('circle-dash-length').value),
+        dashGap: paramName === 'dash-gap' ? value : parseInt(document.getElementById('circle-dash-gap').value),
         color: 'rgba(255, 255, 255, 0.5)'
       };
       break;
@@ -1253,6 +1274,7 @@ function getPreviewParams(type, paramName, value) {
         rotation: paramName === 'rotation' ? value : parseInt(document.getElementById('shape-rotation').value),
         aspect: paramName === 'aspect' ? value : parseFloat(document.getElementById('shape-aspect').value),
         fill: document.getElementById('shape-fill').value,
+        lineThickness: paramName === 'line-thickness' ? value : parseInt(document.getElementById('shape-line-thickness').value),
         color: 'rgba(255, 255, 255, 0.5)'
       };
       break;
@@ -1303,6 +1325,8 @@ function setupEventListeners() {
   setupGhostGuide('circle', 'radius', 'circle-radius-slider');
   setupGhostGuide('circle', 'thickness', 'circle-thickness-slider');
   setupGhostGuide('circle', 'style', 'circle-style');
+  setupGhostGuide('circle', 'dash-length', 'circle-dash-length-slider');
+  setupGhostGuide('circle', 'dash-gap', 'circle-dash-gap-slider');
   setupGhostGuide('shapes', 'type', 'shape-type');
   setupGhostGuide('shapes', 'size', 'shape-size-slider');
   setupGhostGuide('shapes', 'count', 'shape-count-slider');
@@ -1311,6 +1335,7 @@ function setupEventListeners() {
   setupGhostGuide('shapes', 'rotation', 'shape-rotation-slider');
   setupGhostGuide('shapes', 'aspect', 'shape-aspect-slider');
   setupGhostGuide('shapes', 'fill', 'shape-fill');
+  setupGhostGuide('shapes', 'line-thickness', 'shape-line-thickness-slider');
   setupGhostGuide('lines', 'type', 'line-type');
   setupGhostGuide('lines', 'count', 'line-count-slider');
   setupGhostGuide('lines', 'radius', 'line-radius-slider');
@@ -1342,12 +1367,20 @@ function setupEventListeners() {
     const thickness = parseInt(document.getElementById('circle-thickness').value);
     const style = document.getElementById('circle-style').value;
     
-    LayerManager.addLayer('circle', {
+    const params = {
       radius,
       thickness,
       style,
       color: app.settings.foregroundColor
-    });
+    };
+    
+    // 破線/点線の場合は追加パラメータを取得
+    if (style === 'dashed' || style === 'dotted') {
+      params.dashLength = parseInt(document.getElementById('circle-dash-length').value);
+      params.dashGap = parseInt(document.getElementById('circle-dash-gap').value);
+    }
+    
+    LayerManager.addLayer('circle', params);
   });
   
   // 図形の追加
@@ -1361,6 +1394,12 @@ function setupEventListeners() {
     const aspect = parseFloat(document.getElementById('shape-aspect').value);
     const fill = document.getElementById('shape-fill').value;
     
+    // 線の太さは線のみの場合に取得
+    let lineThickness = 1;
+    if (fill === 'stroke') {
+      lineThickness = parseInt(document.getElementById('shape-line-thickness').value);
+    }
+    
     LayerManager.addLayer('shapes', {
       shapeType,
       size,
@@ -1370,6 +1409,7 @@ function setupEventListeners() {
       rotation,
       aspect,
       fill,
+      lineThickness,
       color: app.settings.foregroundColor
     });
   });
@@ -1459,6 +1499,37 @@ function setupEventListeners() {
       starFactorGroup.style.display = 'none';
     }
   });
+  
+  // 図形の塗りつぶし変更時の線の太さ表示/非表示
+  document.getElementById('shape-fill').addEventListener('change', (e) => {
+    const fillType = e.target.value;
+    const lineThicknessGroup = document.getElementById('shape-line-thickness-group');
+    
+    if (fillType === 'stroke') {
+      lineThicknessGroup.style.display = 'block';
+    } else {
+      lineThicknessGroup.style.display = 'none';
+    }
+  });
+  
+  // 円のスタイルによる破線/点線パラメータの表示/非表示
+  document.getElementById('circle-style').addEventListener('change', (e) => {
+    const style = e.target.value;
+    const dashGroup = document.getElementById('circle-dash-group');
+    const lengthGroup = document.getElementById('form-dash-length-group');
+    
+    if (style === 'dashed' || style === 'dotted') {
+      dashGroup.style.display = 'block';
+      if(style === 'dashed'){
+        lengthGroup.style.display = 'block';
+      }else{
+        lengthGroup.style.display = 'none';
+      }
+    } else {
+      dashGroup.style.display = 'none';
+      lengthGroup.style.display = 'none';
+    }
+  });
 }
 
 // ランダム魔法陣生成関数
@@ -1504,7 +1575,7 @@ function generateRandomMagicCircle() {
         offset: 15 * Math.floor(Math.random() * 4), // 0 15 30 45
         rotation: 0, // 0
         aspect: 0.8 + Math.random() * 0.4, // 0.8～1.2の範囲
-        fill: ['fill', 'stroke', 'both'][Math.floor(Math.random() * 3)],
+        fill: ['fill', 'stroke'][Math.floor(Math.random() * 2)],
         color: app.settings.foregroundColor
       });
     }
@@ -1596,7 +1667,9 @@ var json_string = {
         "radius": 0.8956793552210642,
         "thickness": 3,
         "style": "dashed",
-        "color": "#ffffff"
+        "color": "#ffffff",
+        "dashLength": 10,
+        "dashGap": 10
       }
     },
     {
@@ -1605,7 +1678,9 @@ var json_string = {
         "radius": 0.4664021968409294,
         "thickness": 3,
         "style": "dashed",
-        "color": "#ffffff"
+        "color": "#ffffff",
+        "dashLength": 10,
+        "dashGap": 5
       }
     },
     {
@@ -1653,8 +1728,10 @@ var json_string = {
       "params": {
         "radius": 0.25,
         "thickness": 8,
-        "style": "dotted",
-        "color": "#ffffff"
+        "style": "dashed",
+        "color": "#ffffff",
+        "dashLength": 2,
+        "dashGap": 5
       }
     },
     {
@@ -1678,7 +1755,7 @@ var json_string = {
         "size": 0.15,
         "count": 6,
         "radius": 0.71,
-        "offset": 30,
+        "offset": 0,
         "rotation": 0,
         "aspect": 1,
         "fill": "fill",
@@ -1689,12 +1766,12 @@ var json_string = {
       "type": "shapes",
       "params": {
         "shapeType": "diamond",
-        "size": 0.07,
+        "size": 0.025,
         "count": 16,
         "radius": 0.12,
-        "offset": 30,
+        "offset": 0,
         "rotation": 0,
-        "aspect": 4.1,
+        "aspect": 0.3,
         "fill": "fill",
         "color": "#ffffff"
       }
@@ -1728,7 +1805,7 @@ var json_string = {
         "count": 3,
         "radius": 0.57,
         "thickness": 3,
-        "offset": 30,
+        "offset": 0,
         "color": "#ffffff"
       }
     },
@@ -1739,7 +1816,7 @@ var json_string = {
         "count": 3,
         "radius": 0.57,
         "thickness": 3,
-        "offset": 90,
+        "offset": 60,
         "color": "#ffffff"
       }
     },
@@ -1747,18 +1824,22 @@ var json_string = {
       "type": "circle",
       "params": {
         "radius": 0.17,
-        "thickness": 2,
+        "thickness": 3,
         "style": "dotted",
-        "color": "#ffffff"
+        "color": "#ffffff",
+        "dashLength": 5,
+        "dashGap": 10
       }
     },
     {
       "type": "circle",
       "params": {
         "radius": 0.61,
-        "thickness": 2,
+        "thickness": 3,
         "style": "dotted",
-        "color": "#ffffff"
+        "color": "#ffffff",
+        "dashLength": 5,
+        "dashGap": 10
       }
     },
     {

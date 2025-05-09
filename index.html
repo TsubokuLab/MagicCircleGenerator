@@ -102,6 +102,22 @@
                 <option value="dotted">点線</option>
               </select>
             </div>
+            <div id="circle-dash-group" style="display: none;">
+              <div id="form-dash-length-group" class="form-group">
+                <label for="circle-dash-length">線の長さ:</label>
+                <div class="slider-container">
+                  <input type="range" id="circle-dash-length-slider" value="10" min="1" max="50" step="1" class="slider">
+                  <input type="number" id="circle-dash-length" value="10" min="1" max="50" step="1" class="slider-value">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="circle-dash-gap">間隔:</label>
+                <div class="slider-container">
+                  <input type="range" id="circle-dash-gap-slider" value="5" min="1" max="50" step="1" class="slider">
+                  <input type="number" id="circle-dash-gap" value="5" min="1" max="50" step="1" class="slider-value">
+                </div>
+              </div>
+            </div>
             <button id="add-circle" class="action-button"><i class="fa-regular fa-circle"></i> 円を追加</button>
           </div>
           
@@ -141,21 +157,30 @@
             <div class="form-group">
             <label for="shape-offset">角度オフセット (度):</label>
             <div class="slider-container">
-              <input type="range" id="shape-offset-slider" value="0" min="0" max="360" step="1" class="slider">
-              <input type="number" id="shape-offset" value="0" min="0" max="360" step="1" class="slider-value">
+              <input type="range" id="shape-offset-slider" value="0" min="-180" max="180" step="1" class="slider" list="markers">
+              <datalist id="markers">
+                <option value="0"></option>
+              </datalist>
+              <input type="number" id="shape-offset" value="0" min="-180" max="180" step="1" class="slider-value">
             </div>
             </div>
             <div class="form-group">
             <label for="shape-rotation">図形の回転 (度):</label>
             <div class="slider-container">
-              <input type="range" id="shape-rotation-slider" value="0" min="0" max="360" step="1" class="slider">
-              <input type="number" id="shape-rotation" value="0" min="0" max="360" step="1" class="slider-value">
+              <input type="range" id="shape-rotation-slider" value="0" min="-180" max="180" step="1" class="slider" list="markers">
+              <datalist id="markers">
+                <option value="0"></option>
+              </datalist>
+              <input type="number" id="shape-rotation" value="0" min="-180" max="180" step="1" class="slider-value">
             </div>
             </div>
             <div class="form-group" id="shape-aspect-group">
             <label for="shape-aspect">アスペクト比:</label>
             <div class="slider-container">
-              <input type="range" id="shape-aspect-slider" value="1" min="0.1" max="5" step="0.1" class="slider">
+              <input type="range" id="shape-aspect-slider" value="1" min="0.1" max="5" step="0.1" class="slider" list="markers">
+              <datalist id="markers">
+                <option value="1"></option>
+              </datalist>
               <input type="number" id="shape-aspect" value="1" min="0.1" max="5" step="0.1" class="slider-value">
             </div>
             </div>
@@ -164,8 +189,14 @@
               <select id="shape-fill">
                 <option value="fill">塗りつぶし</option>
                 <option value="stroke">線のみ</option>
-                <option value="both">両方</option>
               </select>
+            </div>
+            <div class="form-group" id="shape-line-thickness-group" style="display: none;">
+              <label for="shape-line-thickness">線の太さ:</label>
+              <div class="slider-container">
+                <input type="range" id="shape-line-thickness-slider" value="1" min="1" max="20" step="1" class="slider">
+                <input type="number" id="shape-line-thickness" value="1" min="1" max="20" step="1" class="slider-value">
+              </div>
             </div>
             <button id="add-shapes" class="action-button"><i class="fas fa-shapes"></i> 図形を追加</button>
 
@@ -175,8 +206,8 @@
             <div class="form-group">
               <label for="line-type">線のタイプ:</label>
               <select id="line-type">
-                <option value="connecting">接続線</option>
                 <option value="polygon">多角形</option>
+                <option value="connecting">接続線</option>
                 <option value="star">星形</option>
                 <option value="radial">放射状</option>
               </select>
@@ -205,8 +236,11 @@
             <div class="form-group">
             <label for="line-offset">角度オフセット (度):</label>
             <div class="slider-container">
-              <input type="range" id="line-offset-slider" value="0" min="0" max="360" step="1" class="slider">
-              <input type="number" id="line-offset" value="0" min="0" max="360" step="1" class="slider-value">
+              <input type="range" id="line-offset-slider" value="0" min="-180" max="180" step="1" class="slider" list="markers">
+              <datalist id="markers">
+                <option value="0"></option>
+              </datalist>
+              <input type="number" id="line-offset" value="0" min="-180" max="180" step="1" class="slider-value">
             </div>
             </div>
             <div class="form-group" id="star-factor-group" style="display: none;">
