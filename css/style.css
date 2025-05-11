@@ -223,6 +223,9 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* 横スクロールを防止 */
 }
 
 /* コントロールパネル */
@@ -268,6 +271,9 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
 }
 
 .slider {
@@ -616,10 +622,12 @@ main {
   .layer-panel {
     flex: 0 0 100%;
     max-height: none;
+    width: 100%; /* 幅を100%に設定 */
   }
   
   .canvas-container {
     height: 600px;
+    width: 100%; /* 幅を100%に設定 */
   }
 }
 
@@ -645,7 +653,8 @@ main {
 /* スマートフォン対応 */
 @media (max-width: 480px) {
   .container {
-    padding: 10px;
+    padding: 5px; /* より小さいパディング */
+    overflow-x: hidden; /* 横幅のはみ出しを防止 */
   }
   
   .title-content {
@@ -659,7 +668,9 @@ main {
   }
   
   .control-panel, .layer-panel {
-    padding: 10px;
+    padding: 8px; /* パディングを小さく */
+    width: 100%; /* 幅を100%に設定 */
+    box-sizing: border-box; /* パディングを幅に含む */
   }
   
   .panel-section h2 {
@@ -675,13 +686,20 @@ main {
     margin-bottom: 5px;
   }
   
+  .slider-value {
+    width: 60px; /* 入力フィールドを小さく */
+    padding: 4px; /* パディングを小さく */
+    font-size: 12px; /* フォントサイズを小さく */
+  }
+  
   .tab-button {
-    padding: 6px 10px;
+    padding: 6px 8px; /* パディングを小さく */
     font-size: 0.8rem;
   }
   
   .canvas-container {
     height: 350px;
+    width: 100%;
   }
   
   /* タッチ操作の改善 */
@@ -704,6 +722,18 @@ main {
     padding: 5px 8px;
     font-size: 1rem;
   }
+  
+  /* 要素のオーバーフローを防止 */
+  .form-group label {
+    font-size: 0.85rem; /* フォントサイズを小さく */
+    word-break: break-word; /* 長い単語を折り返す */
+  }
+  
+  .form-group select {
+    width: 100%;
+    font-size: 12px;
+    padding: 6px;
+  }
 }
 
 /* タッチデバイスのタップ領域の改善 */
@@ -715,5 +745,64 @@ main {
   .layer-actions button {
     min-height: 44px;
     min-width: 44px;
+  }
+}
+
+/* 小型スマートフォン向けの特別調整 */
+@media (max-width: 380px) {
+  .container {
+    padding: 2px;
+  }
+  
+  .title-icon {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .title-text h1 {
+    font-size: 1.3rem;
+  }
+  
+  .control-panel, .layer-panel {
+    padding: 5px;
+  }
+  
+  /* タブのスタイル調整 */
+  .element-tabs {
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  
+  .tab-button {
+    flex: 1;
+    padding: 5px 2px;
+    font-size: 0.75rem;
+  }
+  
+  /* スライダー値の入力フィールドをさらに小さく */
+  .slider-value {
+    width: 50px;
+    padding: 2px;
+    font-size: 11px;
+  }
+  
+  /* 複雑なパンル配置の調整 */
+  .form-group {
+    margin-bottom: 6px;
+  }
+  
+  .form-group label {
+    margin-bottom: 2px;
+    font-size: 0.8rem;
+  }
+  
+  /* カラーピッカーの配置調整 */
+  .color-controls {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  .color-item {
+    flex: 1 0 100%;
   }
 }
