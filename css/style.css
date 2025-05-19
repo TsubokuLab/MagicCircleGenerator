@@ -212,6 +212,83 @@ body {
   height: 16px;
   margin-left: 10px;
   vertical-align: middle;
+}
+
+/* フォントスタイル */
+.font-serif {
+  font-family: 'serif', serif;
+}
+
+.font-sans-serif {
+  font-family: 'sans-serif', sans-serif;
+}
+
+.font-noto-serif-jp {
+  font-family: 'Noto Serif JP', serif;
+}
+
+.font-noto-sans-jp {
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.font-zcool-kuaile {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+}
+
+.font-hina-mincho {
+  font-family: 'Hina Mincho', serif;
+}
+
+.font-reggae-one {
+  font-family: 'Reggae One', cursive;
+}
+
+.font-dot-gothic {
+  font-family: 'DotGothic16', sans-serif;
+}
+
+.font-hachi-maru-pop {
+  font-family: 'Hachi Maru Pop', cursive;
+}
+
+.font-new-tegomin {
+  font-family: 'New Tegomin', serif;
+}
+
+.font-stick {
+  font-family: 'Stick', sans-serif;
+}
+
+.font-yomogi {
+  font-family: 'Yomogi', cursive;
+}
+
+.font-zen-old-mincho {
+  font-family: 'Zen Old Mincho', serif;
+}
+
+.font-nothing-you-could-do {
+  font-family: 'Nothing You Could Do', cursive;
+}
+
+.font-league-script {
+  font-family: 'League Script', cursive;
+}
+
+.font-special-elite {
+  font-family: 'Special Elite', cursive;
+}
+
+.font-libre-barcode-39 {
+  font-family: 'Libre Barcode 39', monospace;
+}
+
+.font-padauk {
+  font-family: 'Padauk', sans-serif;
+}
+
+.font-rampart-one {
+  font-family: 'Rampart One', cursive;
 }/* リセットCSS */
 * {
   margin: 0;

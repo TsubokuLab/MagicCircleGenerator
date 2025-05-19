@@ -31,6 +31,9 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="img/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Hina+Mincho&family=Reggae+One&family=DotGothic16&family=Hachi+Maru+Pop&family=New+Tegomin&family=Stick&family=Yomogi&family=Noto+Sans+JP&family=Noto+Serif+JP&family=Zen+Old+Mincho&family=Nothing+You+Could+Do&family=League+Script&family=Special+Elite&family=Libre+Barcode+39&family=Padauk&family=Rampart+One&display=swap" rel="stylesheet">
 </head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-TFTH0DVE14"></script>
@@ -86,6 +89,7 @@
             <button class="tab-button active" data-tab="circles">円</button>
             <button class="tab-button" data-tab="shapes">図形</button>
             <button class="tab-button" data-tab="lines">線</button>
+            <button class="tab-button" data-tab="text">文字</button>
           </div>
           
           <div class="tab-content active" id="circles">
@@ -261,6 +265,97 @@
             </div>
             <button id="add-lines" class="action-button"><i class="fas fa-project-diagram"></i> 線を追加</button>
 
+          </div>
+          
+          <div class="tab-content" id="text">
+            <div class="form-group">
+              <label for="text-content">文字列:</label>
+              <div style="display: flex; align-items: center; gap: 5px;">
+                <input type="text" id="text-content" value="満月符結・曜陣霊封・妖火祓星・聖印陰神" placeholder="入力した文字が円周上に配置されます" class="slider-value" style="flex: 1; text-align: left;">            
+                <button id="random-text-button" class="icon-button" title="ランダム文字列生成"><i class="fas fa-random"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="text-mode">配置モード:</label>
+              <select id="text-mode">
+                <option value="loop">ループ配置</option>
+                <option value="single">シングル配置</option>
+                <option value="equal">等間隔配置</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="text-direction">文字の方向:</label>
+              <select id="text-direction">
+                <option value="ltr">左から右</option>
+                <option value="rtl">右から左</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="text-font">フォント:</label>
+              <select id="text-font">
+                <option value="serif">明朝体</option>
+                <option value="sans-serif">ゴシック体</option>
+                <option value="noto-serif-jp">Noto Serif Japanese</option>
+                <option value="noto-sans-jp">Noto Sans Japanese</option>
+                <option value="zcool-kuaile">ZCOOL KuaiLe</option>
+                <option value="hina-mincho">日向明朝</option>
+                <option value="reggae-one">Reggae One</option>
+                <option value="dot-gothic">DotGothic16</option>
+                <option value="hachi-maru-pop">Hachi Maru Pop</option>
+                <option value="new-tegomin">New Tegomin</option>
+                <option value="stick">Stick</option>
+                <option value="yomogi">Yomogi</option>
+                <option value="zen-old-mincho">Zen Old Mincho</option>
+                <option value="nothing-you-could-do">Nothing You Could Do</option>
+                <option value="league-script">League Script</option>
+                <option value="special-elite">Special Elite</option>
+                <option value="libre-barcode-39">Libre Barcode 39</option>
+                <option value="padauk">Padauk</option>
+                <option value="rampart-one">Rampart One</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="text-radius">配置半径:</label>
+              <div class="slider-container">
+                <input type="range" id="text-radius-slider" value="0.5" min="0" max="1" step="0.01" class="slider">
+                <input type="number" id="text-radius" value="0.5" min="0" max="1" step="0.01" class="slider-value">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="text-size">文字サイズ:</label>
+              <div class="slider-container">
+                <input type="range" id="text-size-slider" value="24" min="8" max="100" step="1" class="slider">
+                <input type="number" id="text-size" value="24" min="8" max="100" step="1" class="slider-value">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="text-spacing">文字間隔 (文字サイズ比):</label>
+              <div class="slider-container">
+                <input type="range" id="text-spacing-slider" value="1.0" min="0.25" max="10" step="0.01" class="slider">
+                <input type="number" id="text-spacing" value="1.0" min="0.25" max="10" step="0.01" class="slider-value">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="text-offset">角度オフセット (度):</label>
+              <div class="slider-container">
+                <input type="range" id="text-offset-slider" value="0" min="-180" max="180" step="1" class="slider" list="markers">
+                <datalist id="markers">
+                  <option value="0"></option>
+                </datalist>
+                <input type="number" id="text-offset" value="0" min="-180" max="180" step="1" class="slider-value">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="text-rotation">文字の回転 (度):</label>
+              <div class="slider-container">
+                <input type="range" id="text-rotation-slider" value="0" min="-180" max="180" step="1" class="slider" list="markers">
+                <datalist id="markers">
+                  <option value="0"></option>
+                </datalist>
+                <input type="number" id="text-rotation" value="0" min="-180" max="180" step="1" class="slider-value">
+              </div>
+            </div>
+            <button id="add-text" class="action-button"><i class="fas fa-font"></i> 文字を追加</button>
           </div>
         </div>
       </div>

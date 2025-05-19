@@ -108,6 +108,9 @@ class Layer {
       case 'lines':
         this.renderLines(ctx, canvas, _scale);
         break;
+      case 'text':
+        this.renderText(ctx, canvas, _scale);
+        break;
     }
   }
   
@@ -452,6 +455,229 @@ class Layer {
     ctx.closePath();
     ctx.stroke();
   }
+  
+  renderText(ctx, canvas, scaleFactor) {
+    const {
+      text, font, textSize, radius, spacing, offset, rotation, mode, color
+    } = this.params;
+    
+    if (!text || text.length === 0) return;
+    if(spacing <= 0) return;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const maxRadius = Math.min(canvas.width, canvas.height) / 2;
+    const actualRadius = radius * maxRadius;
+    const actualSize = textSize * scaleFactor;
+    
+    // フォントスタイルの設定
+    ctx.font = `${actualSize}px ${this.getFontFamily(font)}`;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // 配置モードによって処理を変更
+    switch (mode) {
+      case 'loop':
+        this.drawLoopText(ctx, centerX, centerY, radius, maxRadius, spacing, offset, rotation);
+        break;
+      case 'single':
+        this.drawSingleText(ctx, centerX, centerY, actualRadius, spacing, offset, rotation);
+        break;
+      case 'equal':
+        this.drawEqualText(ctx, centerX, centerY, actualRadius, offset, rotation);
+        break;
+    }
+  }
+  
+  getFontFamily(fontKey) {
+    const fonts = {
+      'serif': 'serif',
+      'sans-serif': 'sans-serif',
+      'noto-serif-jp': '"Noto Serif JP", serif',
+      'noto-sans-jp': '"Noto Sans JP", sans-serif',
+      'zcool-kuaile': '"ZCOOL KuaiLe", sans-serif',
+      'hina-mincho': '"Hina Mincho", serif',
+      'reggae-one': '"Reggae One", cursive',
+      'dot-gothic': '"DotGothic16", sans-serif',
+      'hachi-maru-pop': '"Hachi Maru Pop", cursive',
+      'new-tegomin': '"New Tegomin", serif',
+      'stick': '"Stick", sans-serif',
+      'yomogi': '"Yomogi", cursive',
+      'zen-old-mincho': '"Zen Old Mincho", serif',
+      'nothing-you-could-do': '"Nothing You Could Do", cursive',
+      'league-script': '"League Script", cursive',
+      'special-elite': '"Special Elite", cursive',
+      'libre-barcode-39': '"Libre Barcode 39", monospace',
+      'padauk': '"Padauk", sans-serif',
+      'rampart-one': '"Rampart One", cursive'
+    };
+    
+    return fonts[fontKey] || 'sans-serif';
+  }
+  
+  drawLoopText(ctx, centerX, centerY, radius, maxRadius, spacing, angleOffset, rotation) {
+    const { text, textSize, direction = 'ltr' } = this.params;
+    let chars = text.split('');
+    
+    // 右から左の場合は順序を反転
+    if (direction === 'rtl') {
+      chars = chars.reverse();
+    }
+    
+    const totalChars = chars.length;
+    
+    // 文字間の角度を計算 - 文字サイズ比に対応
+    // 安全な最小角度を保証する
+    const minAngle = 0.5; // 最小角度を設定、小さすぎると迅速に文字が増える
+    
+    // スペーシング係数を使って文字サイズに比例した間隔を計算
+    // spacingは文字サイズに対する比率（1.0で等幅、0.5で半分の間隔）
+    const actualRadius = radius * maxRadius;
+    const fixedRadius = radius * BASE_CANVAS_SIZE / 2;
+    const spacingAngle = (textSize * spacing / fixedRadius) * (180 / Math.PI);
+
+    console.log("spacing:" + spacing + " radius:" + radius + " totalChars:" + totalChars + " spacingAngle:" + spacingAngle);
+
+    // 安全な最小角度を保証
+    const charAngle = Math.max(spacingAngle, minAngle);
+    
+    // 全体の長さを計算
+    const totalLength = (totalChars - 1) * charAngle;
+    
+    // 実際に描画する文字数に制限を設ける
+    const maxDisplayChars = 1000; // 安全な最大文字数
+    const maxChars = Math.min(Math.ceil(360 / charAngle), maxDisplayChars);
+    
+    // 描画開始角度 - 魔法陣の下部から開始するように調整 (270度が下部)
+    let startAngle = angleOffset + 270 - (totalLength / 2);
+    
+    // 全周に収まる数を計算、ただし安全な最大回数を設定
+    const maxRepeatCount = Math.ceil(maxChars / totalChars);
+    const repeatCount = Math.min(Math.ceil(360 / (totalChars * charAngle)), maxRepeatCount);
+    
+    // 文字を描画
+    let totalDrawnChars = 0;
+    for (let r = 0; r < repeatCount; r++) {
+      for (let i = 0; i < totalChars; i++) {
+        // 最大文字数に達したら終了
+        if (totalDrawnChars >= maxDisplayChars) break;
+        
+        const char = chars[i];
+        const angle = startAngle + (i + r * totalChars) * charAngle;
+        
+        // 360度を超える場合は描画しない
+        if ((i + r * totalChars) * charAngle > 360) break;
+        
+        const pos = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+        
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        
+        // 文字が中心を向くように回転（上向きが中心方向）
+        let textRotation = angle + 90 + rotation;
+        ctx.rotate(Utils.degToRad(textRotation));
+        
+        ctx.fillText(char, 0, 0);
+        ctx.restore();
+        
+        totalDrawnChars++;
+      }
+    }
+  }
+  
+  drawSingleText(ctx, centerX, centerY, radius, spacing, angleOffset, rotation) {
+    const { text, textSize, direction = 'ltr' } = this.params;
+    let chars = text.split('');
+    
+    // 右から左の場合は順序を反転
+    if (direction === 'rtl') {
+      chars = chars.reverse();
+    }
+    
+    const totalChars = chars.length;
+    
+    // 文字間の角度を計算 - 文字サイズ比に対応
+    // 安全な最小角度を保証する
+    const minAngle = 0.5; // 最小角度を設定、小さすぎると迅速に文字が増える
+    
+    // スペーシング係数を使って文字サイズに比例した間隔を計算
+    // spacingは文字サイズに対する比率（1.0で等幅、0.5で半分の間隔）
+    const actualRadius = radius * maxRadius;
+    const fixedRadius = radius * BASE_CANVAS_SIZE / 2;
+    const spacingAngle = (textSize * spacing / fixedRadius) * (180 / Math.PI);
+    console.log("spacing:" + spacing + " radius:" + radius + " totalChars:" + totalChars + " spacingAngle:" + spacingAngle);
+
+    // 安全な最小角度を保証
+    const charAngle = Math.max(spacingAngle, minAngle);
+    
+    // 全体の長さを計算
+    const totalLength = (totalChars - 1) * charAngle;
+    
+    // 描画開始角度 - 魔法陣の下部から開始するように調整 (270度が下部)
+    let startAngle = angleOffset + 270 - (totalLength / 2);
+    
+    // 文字を描画、安全な最大文字数を設定
+    const maxDisplayChars = 1000;
+    const displayChars = Math.min(totalChars, maxDisplayChars);
+    
+    for (let i = 0; i < displayChars; i++) {
+      const char = chars[i];
+      const angle = startAngle + i * charAngle;
+      
+      const pos = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+      
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+      
+      // 文字が中心を向くように回転（上向きが中心方向）
+      let textRotation = angle + 90 + rotation;
+      ctx.rotate(Utils.degToRad(textRotation));
+      
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+    }
+  }
+  
+  drawEqualText(ctx, centerX, centerY, radius, angleOffset, rotation) {
+    const { text, direction = 'ltr' } = this.params;
+    let chars = text.split('');
+    
+    // 右から左の場合は順序を反転
+    if (direction === 'rtl') {
+      chars = chars.reverse();
+    }
+    
+    const totalChars = chars.length;
+    
+    // 安全な最大文字数を設定
+    const maxDisplayChars = 1000;
+    const displayChars = Math.min(totalChars, maxDisplayChars);
+    
+    // 全周を文字数で分割
+    const charAngle = 360 / displayChars;
+    
+    // 描画開始角度 - 魔法陣の下部から開始するように調整 (270度が下部)
+    let startAngle = angleOffset + 270;
+    
+    // 文字を描画
+    for (let i = 0; i < displayChars; i++) {
+      const char = chars[i];
+      const angle = startAngle + i * charAngle;
+      
+      const pos = Utils.polarToCartesian(centerX, centerY, radius, angle);
+      
+      ctx.save();
+      ctx.translate(pos.x, pos.y);
+      
+      // 文字が中心を向くように回転（上向きが中心方向）
+      let textRotation = angle + 90 + rotation;
+      ctx.rotate(Utils.degToRad(textRotation));
+      
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+    }
+  }
 }
 
 // レイヤー管理
@@ -587,6 +813,10 @@ const LayerManager = {
         return `${this.getShapeTypeName(layer.params.shapeType)} x${layer.params.count}`;
       case 'lines':
         return `${this.getLineTypeName(layer.params.lineType)} (n=${layer.params.count})`;
+      case 'text':
+        const text = layer.params.text;
+        const shortText = text.length > 10 ? text.substring(0, 10) + '...' : text;
+        return `文字: "${shortText}"`;
       default:
         return `レイヤー ${layer.id}`;
     }
@@ -742,42 +972,125 @@ const Exporter = {
   
 // SVGエクスポート関数
 exportAsSVG: function(size) {
-// SVG作成
-const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-svg.setAttribute('width', size);
-svg.setAttribute('height', size);
-svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  // SVG作成
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
 
-// 背景（透過設定がオフの場合のみ）
-if (!app.settings.transparentBackground) {
-  const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  rect.setAttribute('width', size);
-  rect.setAttribute('height', size);
-  rect.setAttribute('fill', app.settings.backgroundColor);
-  svg.appendChild(rect);
-}
-
-// スケール係数
-const scaleFactor = size / BASE_CANVAS_SIZE;
-
-// 全てのレイヤーをSVG要素に変換
-app.layers.filter(layer => !layer.isGhost).forEach(layer => {
-const layerSvg = this.createSVGFromLayer(layer, size, scaleFactor);
-if (layerSvg) {
-    svg.appendChild(layerSvg);
+  // 背景（透過設定がオフの場合のみ）
+  if (!app.settings.transparentBackground) {
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('width', size);
+    rect.setAttribute('height', size);
+    rect.setAttribute('fill', app.settings.backgroundColor);
+    svg.appendChild(rect);
   }
-});
 
-// シリアライズ
-const serializer = new XMLSerializer();
-const svgString = serializer.serializeToString(svg);
+  // スケール係数
+  const scaleFactor = size / BASE_CANVAS_SIZE;
+
+  // 使用されているフォントを収集
+  const usedFonts = [];
+  app.layers.filter(layer => !layer.isGhost && layer.type === 'text').forEach(layer => {
+    if (layer.params.font && layer.params.font !== 'serif' && layer.params.font !== 'sans-serif') {
+      usedFonts.push(layer.params.font);
+    }
+  });
+
+  // 重複を除去
+  const uniqueFonts = [...new Set(usedFonts)];
+
+  // defs要素とstyle要素の作成
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  let styleContent = '';
+
+  // フォントURLのマッピング
+  const fontUrlMapping = {
+    'noto-serif-jp': 'Noto+Serif+JP',
+    'noto-sans-jp': 'Noto+Sans+JP',
+    'zcool-kuaile': 'ZCOOL+KuaiLe',
+    'hina-mincho': 'Hina+Mincho',
+    'reggae-one': 'Reggae+One',
+    'dot-gothic': 'DotGothic16',
+    'hachi-maru-pop': 'Hachi+Maru+Pop',
+    'new-tegomin': 'New+Tegomin',
+    'stick': 'Stick',
+    'yomogi': 'Yomogi',
+    'zen-old-mincho': 'Zen+Old+Mincho',
+    'nothing-you-could-do': 'Nothing+You+Could+Do',
+    'league-script': 'League+Script',
+    'special-elite': 'Special+Elite',
+    'libre-barcode-39': 'Libre+Barcode+39',
+    'padauk': 'Padauk',
+    'rampart-one': 'Rampart+One'
+  };
+
+  // フォントファミリーのマッピング
+  const fontFamilyMapping = {
+    'noto-serif-jp': '"Noto Serif JP", serif',
+    'noto-sans-jp': '"Noto Sans JP", sans-serif',
+    'zcool-kuaile': '"ZCOOL KuaiLe", sans-serif',
+    'hina-mincho': '"Hina Mincho", serif',
+    'reggae-one': '"Reggae One", cursive',
+    'dot-gothic': '"DotGothic16", sans-serif',
+    'hachi-maru-pop': '"Hachi Maru Pop", cursive',
+    'new-tegomin': '"New Tegomin", serif',
+    'stick': '"Stick", sans-serif',
+    'yomogi': '"Yomogi", cursive',
+    'zen-old-mincho': '"Zen Old Mincho", serif',
+    'nothing-you-could-do': '"Nothing You Could Do", cursive',
+    'league-script': '"League Script", cursive',
+    'special-elite': '"Special Elite", cursive',
+    'libre-barcode-39': '"Libre Barcode 39", monospace',
+    'padauk': '"Padauk", sans-serif',
+    'rampart-one': '"Rampart One", cursive'
+  };
+
+  if (uniqueFonts.length > 0) {
+    // Google Fontsのインポート
+    const fontNames = uniqueFonts
+      .map(font => fontUrlMapping[font])
+      .filter(name => name !== undefined);
+
+    if (fontNames.length > 0) {
+      // @importルールを追加
+      styleContent += `@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+JP&family=${fontNames.join('&family=')}&display=swap");\n`;
+    }
+
+    // 各フォントのクラスを定義
+    uniqueFonts.forEach(font => {
+      if (fontFamilyMapping[font]) {
+        styleContent += `.font-${font} { font-family: ${fontFamilyMapping[font]}; }\n`;
+      }
+    });
+
+    // スタイル要素にコンテンツを設定
+    style.textContent = styleContent;
+    defs.appendChild(style);
+    svg.appendChild(defs);
+  }
+
+  // 全てのレイヤーをSVG要素に変換
+  app.layers.filter(layer => !layer.isGhost).forEach(layer => {
+    const layerSvg = this.createSVGFromLayer(layer, size, scaleFactor, uniqueFonts);
+    if (layerSvg) {
+      svg.appendChild(layerSvg);
+    }
+  });
+
+  // シリアライズ
+  const serializer = new XMLSerializer();
+  const svgString = serializer.serializeToString(svg);
   const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-    saveAs(svgBlob, 'magic-circle.svg');
-  },
+  saveAs(svgBlob, 'magic-circle.svg');
+},
 
 // レイヤーからSVG要素を作成
-createSVGFromLayer: function(layer, size, scaleFactor) {
+createSVGFromLayer: function(layer, size, scaleFactor, fontsList) {
   const centerX = size / 2;
   const centerY = size / 2;
   const maxRadius = size / 2;
@@ -789,6 +1102,8 @@ createSVGFromLayer: function(layer, size, scaleFactor) {
       return this.createShapesSVG(layer, centerX, centerY, maxRadius, scaleFactor);
     case 'lines':
       return this.createLinesSVG(layer, centerX, centerY, maxRadius, scaleFactor);
+    case 'text':
+      return this.createTextSVG(layer, centerX, centerY, maxRadius, scaleFactor, fontsList);
     default:
       return null;
   }
@@ -931,96 +1246,287 @@ createShapesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
 
 // 線レイヤーをSVGに変換
 createLinesSVG: function(layer, centerX, centerY, maxRadius, scaleFactor) {
-  const { lineType, count, radius, thickness, offset, color, starFactor } = layer.params;
+const { lineType, count, radius, thickness, offset, color } = layer.params;
+// starFactorを別途取得し、なければデフォルト値を使用
+const starFactor = layer.params.starFactor || 2;
+const actualRadius = radius * maxRadius;
+
+const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+group.setAttribute('stroke', color);
+group.setAttribute('stroke-width', Math.max(1, thickness * scaleFactor));
+group.setAttribute('fill', 'none');
+
+switch(lineType) {
+case 'radial':
+for (let i = 0; i < count; i++) {
+// 角度計算を上側(-90度)から始めるように調整
+const angle = (i * 360 / count) + offset - 90;
+const end = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+
+const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+line.setAttribute('x1', centerX);
+line.setAttribute('y1', centerY);
+line.setAttribute('x2', end.x);
+line.setAttribute('y2', end.y);
+
+group.appendChild(line);
+}
+break;
+
+case 'connecting':
+// 全ての点を計算
+const points = [];
+for (let i = 0; i < count; i++) {
+// 角度計算を上側(-90度)から始めるように調整
+const angle = (i * 360 / count) + offset - 90;
+points.push(Utils.polarToCartesian(centerX, centerY, actualRadius, angle));
+}
+
+// すべての点を相互に接続
+for (let i = 0; i < count; i++) {
+for (let j = i + 1; j < count; j++) {
+const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+line.setAttribute('x1', points[i].x);
+line.setAttribute('y1', points[i].y);
+line.setAttribute('x2', points[j].x);
+line.setAttribute('y2', points[j].y);
+
+group.appendChild(line);
+}
+}
+break;
+
+case 'polygon':
+const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+let polygonPoints = [];
+
+for (let i = 0; i < count; i++) {
+// 角度計算を上側(-90度)から始めるように調整
+const angle = (i * 360 / count) + offset - 90;
+const point = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+polygonPoints.push(`${point.x},${point.y}`);
+}
+
+polygon.setAttribute('points', polygonPoints.join(' '));
+polygon.setAttribute('fill', 'none');
+group.appendChild(polygon);
+break;
+
+case 'star':
+if (count < 3) break;
+if (!starFactor) starFactor = 2;
+
+const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+let pathData = '';
+
+for (let i = 0; i < count; i++) {
+// 角度計算を上側(-90度)から始めるように調整
+const angle = (i * 360 / count) + offset - 90;
+const point = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+
+if (i === 0) {
+pathData += `M ${point.x} ${point.y} `;
+} else {
+// 星形の次の点はfactor個先
+const nextIndex = (i * starFactor) % count;
+const nextAngle = (nextIndex * 360 / count) + offset - 90;
+const nextPoint = Utils.polarToCartesian(centerX, centerY, actualRadius, nextAngle);
+
+pathData += `L ${nextPoint.x} ${nextPoint.y} `;
+}
+}
+
+path.setAttribute('d', pathData + 'Z');
+group.appendChild(path);
+break;
+}
+
+return group;
+},
+
+// 文字レイヤーをSVGに変換
+createTextSVG: function(layer, centerX, centerY, maxRadius, scaleFactor, fontsList) {
+  const { text, font, textSize, radius, spacing, offset, rotation, mode, color, direction = 'ltr' } = layer.params;
   const actualRadius = radius * maxRadius;
+  const fixedRadius = radius * BASE_CANVAS_SIZE / 2;
+  const actualSize = textSize * scaleFactor;
   
+  // グループ要素を作成
   const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  group.setAttribute('stroke', color);
-  group.setAttribute('stroke-width', Math.max(1, thickness * scaleFactor));
-  group.setAttribute('fill', 'none');
+  group.setAttribute('fill', color);
   
-  switch(lineType) {
-    case 'radial':
-      for (let i = 0; i < count; i++) {
-        // 角度計算を上側(-90度)から始めるように調整
-        const angle = (i * 360 / count) + offset - 90;
-        const end = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
-        
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', centerX);
-        line.setAttribute('y1', centerY);
-        line.setAttribute('x2', end.x);
-        line.setAttribute('y2', end.y);
-        
-        group.appendChild(line);
-      }
-      break;
+  // 元の配列を変更せずに新しい配列を作成
+  const chars = text.split('');
+  let displayChars = chars;
+  
+  // 配置モードに応じて文字を配置
+  switch (mode) {
+    case 'loop':
+      // 文字間の角度を計算 - 文字サイズ比に対応
+      const minAngle = 0.5; // 最小角度
+      const spaceAngle = (textSize * spacing / fixedRadius) * (180 / Math.PI) * scaleFactor;
+      const charAngle = Math.max(spaceAngle, minAngle);
       
-    case 'connecting':
-      // 全ての点を計算
-      const points = [];
-      for (let i = 0; i < count; i++) {
-        // 角度計算を上側(-90度)から始めるように調整
-        const angle = (i * 360 / count) + offset - 90;
-        points.push(Utils.polarToCartesian(centerX, centerY, actualRadius, angle));
+      // 全体の長さを計算
+      const totalChars = chars.length;
+      const totalLength = (totalChars - 1) * charAngle;
+      
+      // 実際に描画する文字数に制限
+      const maxDisplayChars = 1000;
+      const maxChars = Math.min(Math.ceil(360 / charAngle), maxDisplayChars);
+      
+      // 描画開始角度
+      let startAngle = offset + 270 - (totalLength / 2);
+      
+      // 全周に収まる数を計算
+      const maxRepeatCount = Math.ceil(maxChars / totalChars);
+      const repeatCount = Math.min(Math.ceil(360 / (totalChars * charAngle)), maxRepeatCount);
+      
+      // 右から左の場合は順序を反転
+      if (direction === 'rtl') {
+        displayChars = chars.slice().reverse();
       }
       
-      // すべての点を相互に接続
-      for (let i = 0; i < count; i++) {
-        for (let j = i + 1; j < count; j++) {
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line.setAttribute('x1', points[i].x);
-          line.setAttribute('y1', points[i].y);
-          line.setAttribute('x2', points[j].x);
-          line.setAttribute('y2', points[j].y);
+      // 文字を描画
+      let totalDrawnChars = 0;
+      for (let r = 0; r < repeatCount; r++) {
+        for (let i = 0; i < totalChars; i++) {
+          if (totalDrawnChars >= maxDisplayChars) break;
           
-          group.appendChild(line);
+          const char = displayChars[i];
+          const angle = startAngle + (i + r * totalChars) * charAngle;
+          
+          if ((i + r * totalChars) * charAngle > 360) break;
+          
+          const pos = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+          
+          // テキスト要素を作成
+          const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          textElement.setAttribute('x', '0');
+          textElement.setAttribute('y', '0');
+          textElement.setAttribute('font-size', actualSize);
+          
+          // フォントをクラスとして設定
+          if (fontsList && fontsList.includes(font)) {
+            textElement.setAttribute('class', `font-${font}`);
+          } else {
+            textElement.setAttribute('font-family', layer.getFontFamily(font));
+          }
+          
+          textElement.setAttribute('text-anchor', 'middle');
+          textElement.setAttribute('dominant-baseline', 'middle');
+          
+          // 文字回転
+          let textRotation = angle + 90 + rotation;
+          textElement.setAttribute('transform', `translate(${pos.x}, ${pos.y}) rotate(${textRotation})`);
+          
+          textElement.textContent = char;
+          group.appendChild(textElement);
+          
+          totalDrawnChars++;
         }
       }
       break;
       
-    case 'polygon':
-      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      let polygonPoints = [];
+    case 'single':
+      // 文字間の角度を計算
+      const minAngleSingle = 0.5;
+      const spaceAngleSingle = (textSize * spacing / fixedRadius) * (180 / Math.PI);
+      const singleCharAngle = Math.max(spaceAngleSingle, minAngleSingle);
       
-      for (let i = 0; i < count; i++) {
-        // 角度計算を上側(-90度)から始めるように調整
-        const angle = (i * 360 / count) + offset - 90;
-        const point = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
-        polygonPoints.push(`${point.x},${point.y}`);
+      // 全体の長さを計算
+      const totalCharsSingle = chars.length;
+      const singleTotalLength = (totalCharsSingle - 1) * singleCharAngle;
+      
+      // 描画開始角度
+      let singleStartAngle = offset + 270 - (singleTotalLength / 2);
+      
+      // 文字数制限
+      const maxDisplayCharsSingle = 1000;
+      const displayCharsSingle = Math.min(totalCharsSingle, maxDisplayCharsSingle);
+      
+      // 右から左の場合は順序を反転
+      if (direction === 'rtl') {
+        displayChars = chars.slice().reverse();
       }
       
-      polygon.setAttribute('points', polygonPoints.join(' '));
-      polygon.setAttribute('fill', 'none');
-      group.appendChild(polygon);
-      break;
-      
-    case 'star':
-      if (count < 3) break;
-      if (!starFactor) starFactor = 2;
-      
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      let pathData = '';
-      
-      for (let i = 0; i < count; i++) {
-        // 角度計算を上側(-90度)から始めるように調整
-        const angle = (i * 360 / count) + offset - 90;
-        const point = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+      // 文字を描画
+      for (let i = 0; i < displayCharsSingle; i++) {
+        const char = displayChars[i];
+        const angle = singleStartAngle + i * singleCharAngle;
+        const pos = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
         
-        if (i === 0) {
-          pathData += `M ${point.x} ${point.y} `;
+        // テキスト要素を作成
+        const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElement.setAttribute('x', '0');
+        textElement.setAttribute('y', '0');
+        textElement.setAttribute('font-size', actualSize);
+        
+        // フォントをクラスとして設定
+        if (fontsList && fontsList.includes(font)) {
+          textElement.setAttribute('class', `font-${font}`);
         } else {
-          // 星形の次の点はfactor個先
-          const nextIndex = (i * starFactor) % count;
-          const nextAngle = (nextIndex * 360 / count) + offset - 90;
-          const nextPoint = Utils.polarToCartesian(centerX, centerY, actualRadius, nextAngle);
-          
-          pathData += `L ${nextPoint.x} ${nextPoint.y} `;
+          textElement.setAttribute('font-family', layer.getFontFamily(font));
         }
+        
+        textElement.setAttribute('text-anchor', 'middle');
+        textElement.setAttribute('dominant-baseline', 'middle');
+        
+        // 文字回転
+        let textRotation = angle + 90 + rotation;
+        textElement.setAttribute('transform', `translate(${pos.x}, ${pos.y}) rotate(${textRotation})`);
+        
+        textElement.textContent = char;
+        group.appendChild(textElement);
+      }
+      break;
+      
+    case 'equal':
+      // 文字数制限
+      const totalCharsEqual = chars.length;
+      const maxDisplayCharsEqual = 1000;
+      const displayCharsEqual = Math.min(totalCharsEqual, maxDisplayCharsEqual);
+      
+      // 全周を文字数で分割
+      const equalCharAngle = 360 / displayCharsEqual;
+      
+      // 描画開始角度
+      let equalStartAngle = offset + 270;
+      
+      // 右から左の場合は順序を反転
+      if (direction === 'rtl') {
+        displayChars = chars.slice().reverse();
       }
       
-      path.setAttribute('d', pathData + 'Z');
-      group.appendChild(path);
+      // 文字を描画
+      for (let i = 0; i < displayCharsEqual; i++) {
+        const char = displayChars[i];
+        const angle = equalStartAngle + i * equalCharAngle;
+        const pos = Utils.polarToCartesian(centerX, centerY, actualRadius, angle);
+        
+        // テキスト要素を作成
+        const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElement.setAttribute('x', '0');
+        textElement.setAttribute('y', '0');
+        textElement.setAttribute('font-size', actualSize);
+        
+        // フォントをクラスとして設定
+        if (fontsList && fontsList.includes(font)) {
+          textElement.setAttribute('class', `font-${font}`);
+        } else {
+          textElement.setAttribute('font-family', layer.getFontFamily(font));
+        }
+        
+        textElement.setAttribute('text-anchor', 'middle');
+        textElement.setAttribute('dominant-baseline', 'middle');
+        
+        // 文字回転
+        let textRotation = angle + 90 + rotation;
+        textElement.setAttribute('transform', `translate(${pos.x}, ${pos.y}) rotate(${textRotation})`);
+        
+        textElement.textContent = char;
+        group.appendChild(textElement);
+      }
       break;
   }
   
@@ -1270,8 +1776,8 @@ function getPreviewParams(type, paramName, value) {
         size: paramName === 'size' ? value : parseFloat(document.getElementById('shape-size').value),
         count: paramName === 'count' ? value : parseInt(document.getElementById('shape-count').value),
         radius: paramName === 'radius' ? value : parseFloat(document.getElementById('shape-radius').value),
-        offset: paramName === 'offset' ? value : parseInt(document.getElementById('shape-offset').value),
-        rotation: paramName === 'rotation' ? value : parseInt(document.getElementById('shape-rotation').value),
+        offset: paramName === 'offset' ? value : parseFloat(document.getElementById('shape-offset').value),
+        rotation: paramName === 'rotation' ? value : parseFloat(document.getElementById('shape-rotation').value),
         aspect: paramName === 'aspect' ? value : parseFloat(document.getElementById('shape-aspect').value),
         fill: document.getElementById('shape-fill').value,
         lineThickness: paramName === 'line-thickness' ? value : parseInt(document.getElementById('shape-line-thickness').value),
@@ -1286,13 +1792,29 @@ function getPreviewParams(type, paramName, value) {
         count: paramName === 'count' ? value : parseInt(document.getElementById('line-count').value),
         radius: paramName === 'radius' ? value : parseFloat(document.getElementById('line-radius').value),
         thickness: paramName === 'thickness' ? value : parseInt(document.getElementById('line-thickness').value),
-        offset: paramName === 'offset' ? value : parseInt(document.getElementById('line-offset').value),
+        offset: paramName === 'offset' ? value : parseFloat(document.getElementById('line-offset').value),
         color: 'rgba(255, 255, 255, 0.5)'
       };
       
       if (params.lineType === 'star') {
         params.starFactor = paramName === 'starFactor' ? value : parseFloat(document.getElementById('star-factor').value);
       }
+      break;
+      
+    case 'text':
+      params = {
+        type: 'text',
+        text: document.getElementById('text-content').value,
+        font: document.getElementById('text-font').value,
+        textSize: paramName === 'size' ? value : parseInt(document.getElementById('text-size').value),
+        radius: paramName === 'radius' ? value : parseFloat(document.getElementById('text-radius').value),
+        spacing: paramName === 'spacing' ? value : parseFloat(document.getElementById('text-spacing').value),
+        offset: paramName === 'offset' ? value : parseFloat(document.getElementById('text-offset').value),
+        rotation: paramName === 'rotation' ? value : parseFloat(document.getElementById('text-rotation').value),
+        mode: document.getElementById('text-mode').value,
+        direction: document.getElementById('text-direction').value,
+        color: 'rgba(255, 255, 255, 0.5)'
+      };
       break;
   }
   
@@ -1342,6 +1864,14 @@ function setupEventListeners() {
   setupGhostGuide('lines', 'thickness', 'line-thickness-slider');
   setupGhostGuide('lines', 'offset', 'line-offset-slider');
   setupGhostGuide('lines', 'starFactor', 'star-factor-slider');
+  setupGhostGuide('text', 'radius', 'text-radius-slider');
+  setupGhostGuide('text', 'size', 'text-size-slider');
+  setupGhostGuide('text', 'spacing', 'text-spacing-slider');
+  setupGhostGuide('text', 'offset', 'text-offset-slider');
+  setupGhostGuide('text', 'rotation', 'text-rotation-slider');
+  setupGhostGuide('text', 'mode', 'text-mode');
+  setupGhostGuide('text', 'direction', 'text-direction');
+  setupGhostGuide('text', 'font', 'text-font');
 
   // タブ切り替え
   document.querySelectorAll('.tab-button').forEach(button => {
@@ -1389,8 +1919,8 @@ function setupEventListeners() {
     const size = parseFloat(document.getElementById('shape-size').value);
     const count = parseInt(document.getElementById('shape-count').value);
     const radius = parseFloat(document.getElementById('shape-radius').value);
-    const offset = parseInt(document.getElementById('shape-offset').value);
-    const rotation = parseInt(document.getElementById('shape-rotation').value);
+    const offset = parseFloat(document.getElementById('shape-offset').value);
+    const rotation = parseFloat(document.getElementById('shape-rotation').value);
     const aspect = parseFloat(document.getElementById('shape-aspect').value);
     const fill = document.getElementById('shape-fill').value;
     
@@ -1437,6 +1967,37 @@ function setupEventListeners() {
     }
     
     LayerManager.addLayer('lines', params);
+  });
+  
+  // 文字の追加
+  document.getElementById('add-text').addEventListener('click', () => {
+    const text = document.getElementById('text-content').value;
+    if (!text || text.trim() === '') {
+      alert('文字列を入力してください');
+      return;
+    }
+    
+    const font = document.getElementById('text-font').value;
+    const textSize = parseInt(document.getElementById('text-size').value);
+    const radius = parseFloat(document.getElementById('text-radius').value);
+    const spacing = parseFloat(document.getElementById('text-spacing').value);
+    const offset = parseFloat(document.getElementById('text-offset').value);
+    const rotation = parseFloat(document.getElementById('text-rotation').value);
+    const mode = document.getElementById('text-mode').value;
+    const direction = document.getElementById('text-direction').value;
+    
+    LayerManager.addLayer('text', {
+      text,
+      font,
+      textSize,
+      radius,
+      spacing,
+      offset,
+      rotation,
+      mode,
+      direction,
+      color: app.settings.foregroundColor
+    });
   });
   
   // 基本設定の変更
@@ -1500,6 +2061,66 @@ function setupEventListeners() {
     }
   });
   
+  // 文字入力フィールドのリアルタイムプレビュー
+  document.getElementById('text-content').addEventListener('input', () => {
+    const params = getPreviewParams('text', null, null);
+    
+    // 既存のタイマーをクリア
+    if (ghostGuideTimer) {
+      clearTimeout(ghostGuideTimer);
+    }
+    
+    // ゴーストガイド表示
+    showGhostGuide(params);
+    
+    // タイマーをセットして2秒後に非表示
+    ghostGuideTimer = setTimeout(() => {
+      hideGhostGuide();
+      ghostGuideTimer = null;
+    }, 2000);
+  });
+  
+  // 文字フォントのプレビュー表示
+  document.getElementById('text-font').addEventListener('change', (e) => {
+    const fontSelectElement = e.target;
+    const fontOption = e.target.options[fontSelectElement.selectedIndex];
+    // フォントのclass名を変更
+    fontSelectElement.className = 'font-' + fontSelectElement.value;
+    
+    // プレビュー更新
+    const params = getPreviewParams('text', 'font', fontSelectElement.value);
+    showGhostGuide(params);
+    
+    // タイマーをセットして2秒後に非表示
+    if (ghostGuideTimer) {
+      clearTimeout(ghostGuideTimer);
+    }
+    
+    ghostGuideTimer = setTimeout(() => {
+      hideGhostGuide();
+      ghostGuideTimer = null;
+    }, 2000);
+  });
+  
+  // 文字配置モードのプレビュー表示
+  document.getElementById('text-mode').addEventListener('change', (e) => {
+    const params = getPreviewParams('text', 'mode', e.target.value);
+    
+    // 既存のタイマーをクリア
+    if (ghostGuideTimer) {
+      clearTimeout(ghostGuideTimer);
+    }
+    
+    // ゴーストガイド表示
+    showGhostGuide(params);
+    
+    // タイマーをセットして2秒後に非表示
+    ghostGuideTimer = setTimeout(() => {
+      hideGhostGuide();
+      ghostGuideTimer = null;
+    }, 2000);
+  });
+  
   // 図形の塗りつぶし変更時の線の太さ表示/非表示
   document.getElementById('shape-fill').addEventListener('change', (e) => {
     const fillType = e.target.value;
@@ -1510,6 +2131,30 @@ function setupEventListeners() {
     } else {
       lineThicknessGroup.style.display = 'none';
     }
+  });
+  
+  // ランダム文字列生成ボタン
+  document.getElementById('random-text-button').addEventListener('click', () => {
+    // ランダム文字列を生成して入力欄に設定
+    const randomText = generateRandomText();
+    document.getElementById('text-content').value = randomText;
+    
+    // プレビューを更新
+    const params = getPreviewParams('text', null, null);
+    
+    // 既存のタイマーをクリア
+    if (ghostGuideTimer) {
+      clearTimeout(ghostGuideTimer);
+    }
+    
+    // ゴーストガイド表示
+    showGhostGuide(params);
+    
+    // タイマーをセットして2秒後に非表示
+    ghostGuideTimer = setTimeout(() => {
+      hideGhostGuide();
+      ghostGuideTimer = null;
+    }, 2000);
   });
   
   // 円のスタイルによる破線/点線パラメータの表示/非表示
@@ -1529,6 +2174,56 @@ function setupEventListeners() {
       dashGroup.style.display = 'none';
       lengthGroup.style.display = 'none';
     }
+  });
+}
+
+// ランダム文字列生成関数
+function generateRandomText() {
+  const randomTexts = [
+    '☯❤★❤☯★',
+    '๑๙๘๗ · ณะราเณ・จินทะมา・๖๕๓๒・สุวะทีปะ・นะโมพุทธายะ',
+    'ॐ नमः शिवाय・सर्वं खल्विदं ब्रह्म・५६८९・सिद्धं मंत्रं・तत्त्वमसि',
+    '⟆⟁⟴⧫⟊⟡⟒⟠⟟⧓⧉⟁⟴⟆',
+    '霊封幻影符夜霜護陣祓印祝',
+    '満月符結・曜陣霊封・妖火祓星・聖印陰神',
+    '⊕Ϟᚾᛃʘϟ∴ᛉ⍦ᛇϗ☉ᚱ⧫Ͼᛞᚨᚠᚢᚦᚨᛒᛗᛟᛞᚹ',
+    'ᚨᚠᚢᚦᚨᛒᛗᛟᛞᚹᚨᚠᚢᚦᚨᛒᛗᛟᛞᚹ',
+    "Eldorim · Vashta · Surnakai · Kha'thul · Mirenor · Vel'kar",
+    "Zarath ul menior vek'thal",
+    "Noctem el'khar visudae",
+    "Sethra amon vyr khalem",
+    "Aeth'rul domesca lyr'nan",
+    "Valmor'ek shin'draal kuthek",
+    "Thal'kren zurav oriath",
+    "Vok ren'thas meridion",
+    "Ishtar vel qas'dur omraith"
+  ];
+  
+  return randomTexts[Math.floor(Math.random() * randomTexts.length)];
+}
+
+// ランダム文字列レイヤーを追加する関数
+function addRandomTextLayer() {
+  const fontKeys = ['serif', 'sans-serif', 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'padauk', 'rampart-one'];
+  const randomFont = fontKeys[Math.floor(Math.random() * fontKeys.length)];
+  const placementModes = ['loop', 'equal'];
+  const randomMode = placementModes[Math.floor(Math.random() * placementModes.length)];
+  
+  // ランダム文字列を取得
+  const randomText = generateRandomText();
+  
+  // レイヤー追加
+  LayerManager.addLayer('text', {
+    text: randomText,
+    font: randomFont,
+    textSize: 16 + Math.floor(Math.random() * 30), // 16-45の範囲
+    radius: 0.5 + Math.random() * 0.4, // 0.5-0.9の範囲
+    spacing: 0.5 + Math.random() * 1.5, // 文字サイズに対する0.5-2倍の範囲
+    offset: 0, // 角度オフセットは0に固定
+    rotation: Math.random() > 0.5 ? 0 : 180, // 0度か180度のいずれか
+    mode: randomMode,
+    direction: Math.random() > 0.5 ? 'ltr' : 'rtl',
+    color: app.settings.foregroundColor
   });
 }
 
@@ -1572,8 +2267,8 @@ function generateRandomMagicCircle() {
         size: shapeSize,
         count: divisionCount,
         radius: radius,
-        offset: 15 * Math.floor(Math.random() * 4), // 0 15 30 45
-        rotation: 0, // 0
+        offset: 0, // 角度オフセットは0に固定
+        rotation: 0, // 回転は0に固定
         aspect: 0.8 + Math.random() * 0.4, // 0.8～1.2の範囲
         fill: ['fill', 'stroke'][Math.floor(Math.random() * 2)],
         color: app.settings.foregroundColor
@@ -1598,6 +2293,81 @@ function generateRandomMagicCircle() {
         color: app.settings.foregroundColor
       });
     }
+  }
+  
+  // ランダムに文字を追加（1～2個）
+  // まず1つ目の文字レイヤーを必ず追加
+    const fontKeys = ['serif', 'sans-serif', 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'padauk', 'rampart-one'];
+    const randomFont = fontKeys[Math.floor(Math.random() * fontKeys.length)];
+    const placementModes = ['loop', 'equal'];
+    const randomMode = placementModes[Math.floor(Math.random() * placementModes.length)];
+    
+    // ランダム文字列
+    const randomTexts = [
+      '☯❤★❤☯★',
+      '๑๙๘๗ · ณะราเณ・จินทะมา・๖๕๓๒・สุวะทีปะ・นะโมพุทธายะ',
+      'ॐ नमः शिवाय・सर्वं खल्विदं ब्रह्म・५६८९・सिद्धं मंत्रं・तत्त्वमसि',
+      '⟆⟁⟴⧫⟊⟡⟒⟠⟟⧓⧉⟁⟴⟆',
+      '霊封幻影符夜霜護陣祓印祝',
+      '満月符結・曜陣霊封・妖火祓星・聖印陰神',
+      '⊕Ϟᚾᛃʘϟ∴ᛉ⍦ᛇϗ☉ᚱ⧫Ͼᛞᚨᚠᚢᚦᚨᛒᛗᛟᛞᚹ',
+      'ᚨᚠᚢᚦᚨᛒᛗᛟᛞᚹᚨᚠᚢᚦᚨᛒᛗᛟᛞᚹ',
+      "Eldorim · Vashta · Surnakai · Kha'thul · Mirenor · Vel'kar",
+      "Zarath ul menior vek'thal",
+      "Noctem el'khar visudae",
+      "Sethra amon vyr khalem",
+      "Aeth'rul domesca lyr'nan",
+      "Valmor'ek shin'draal kuthek",
+      "Thal’kren zurav oriath",
+      "Vok ren'thas meridion",
+      "Ishtar vel qas'dur omraith"
+    ];
+    
+    const randomText = randomTexts[Math.floor(Math.random() * randomTexts.length)];
+    
+    // レイヤー追加
+    LayerManager.addLayer('text', {
+      text: randomText,
+      font: randomFont,
+      textSize: 16 + Math.floor(Math.random() * 30), // 16-45の範囲
+      radius: 0.5 + Math.random() * 0.4, // 0.5-0.9の範囲
+      spacing: 0.5 + Math.random() * 1.5, // 文字サイズに対する0.5-2倍の範囲
+      offset: 0, // 角度オフセットは0に固定
+      rotation: Math.random() > 0.5 ? 0 : 180, // 0度か180度のいずれか
+      mode: randomMode,
+      direction: Math.random() > 0.5 ? 'ltr' : 'rtl',
+      color: app.settings.foregroundColor
+    });
+  
+  // 50%の確率で二つ目の文字レイヤーを追加
+  if (Math.random() > 0.5) {
+    const fontKeys2 = ['serif', 'sans-serif', 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'padauk', 'rampart-one'];
+    const randomFont2 = fontKeys2[Math.floor(Math.random() * fontKeys2.length)];
+    const placementModes2 = ['loop', 'equal'];
+    const randomMode2 = placementModes2[Math.floor(Math.random() * placementModes2.length)];
+    
+    // ランダム文字列を取得
+    const randomText2 = generateRandomText();
+    
+    // レイヤー追加（一つ目とは異なる半径であることを保証）
+    let radius2 = 0.2 + Math.random() * 0.3; // 0.2-0.5の範囲
+    if (Math.abs(radius2 - (0.5 + Math.random() * 0.4)) < 0.1) {
+      // 半径が近すぎる場合は調整
+      radius2 = Math.random() > 0.5 ? radius2 + 0.2 : Math.max(0.1, radius2 - 0.2);
+    }
+    
+    LayerManager.addLayer('text', {
+      text: randomText2,
+      font: randomFont2,
+      textSize: 12 + Math.floor(Math.random() * 20), // 12-32の範囲
+      radius: radius2,
+      spacing: 0.5 + Math.random() * 1.5,
+      offset: Math.floor(Math.random() * 90), // 0-90の範囲でオフセットを付ける
+      rotation: Math.random() > 0.5 ? 0 : 180,
+      mode: randomMode2,
+      direction: Math.random() > 0.5 ? 'ltr' : 'rtl',
+      color: app.settings.foregroundColor
+    });
   }
   
   // レイヤーリスト更新
