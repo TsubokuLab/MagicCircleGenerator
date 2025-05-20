@@ -492,8 +492,6 @@ class Layer {
   
   getFontFamily(fontKey) {
     const fonts = {
-      'serif': 'serif',
-      'sans-serif': 'sans-serif',
       'noto-serif-jp': '"Noto Serif JP", serif',
       'noto-sans-jp': '"Noto Sans JP", sans-serif',
       'zcool-kuaile': '"ZCOOL KuaiLe", sans-serif',
@@ -509,7 +507,6 @@ class Layer {
       'league-script': '"League Script", cursive',
       'special-elite': '"Special Elite", cursive',
       'libre-barcode-39': '"Libre Barcode 39", monospace',
-      'padauk': '"Padauk", sans-serif',
       'rampart-one': '"Rampart One", cursive'
     };
     
@@ -1025,7 +1022,6 @@ exportAsSVG: function(size) {
     'league-script': 'League+Script',
     'special-elite': 'Special+Elite',
     'libre-barcode-39': 'Libre+Barcode+39',
-    'padauk': 'Padauk',
     'rampart-one': 'Rampart+One'
   };
 
@@ -1046,7 +1042,6 @@ exportAsSVG: function(size) {
     'league-script': '"League Script", cursive',
     'special-elite': '"Special Elite", cursive',
     'libre-barcode-39': '"Libre Barcode 39", monospace',
-    'padauk': '"Padauk", sans-serif',
     'rampart-one': '"Rampart One", cursive'
   };
 
@@ -1058,7 +1053,7 @@ exportAsSVG: function(size) {
 
     if (fontNames.length > 0) {
       // @importルールを追加
-      styleContent += `@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+JP&family=${fontNames.join('&family=')}&display=swap");\n`;
+      styleContent += `@import url("https://fonts.googleapis.com/css2?family=${fontNames.join('&family=')}&display=swap");\n`;
     }
 
     // 各フォントのクラスを定義
@@ -2204,7 +2199,7 @@ function generateRandomText() {
 
 // ランダム文字列レイヤーを追加する関数
 function addRandomTextLayer() {
-  const fontKeys = ['serif', 'sans-serif', 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'padauk', 'rampart-one'];
+  const fontKeys = [ 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'rampart-one'];
   const randomFont = fontKeys[Math.floor(Math.random() * fontKeys.length)];
   const placementModes = ['loop', 'equal'];
   const randomMode = placementModes[Math.floor(Math.random() * placementModes.length)];
@@ -2297,7 +2292,7 @@ function generateRandomMagicCircle() {
   
   // ランダムに文字を追加（1～2個）
   // まず1つ目の文字レイヤーを必ず追加
-    const fontKeys = ['serif', 'sans-serif', 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'padauk', 'rampart-one'];
+    const fontKeys = [ 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'rampart-one'];
     const randomFont = fontKeys[Math.floor(Math.random() * fontKeys.length)];
     const placementModes = ['loop', 'equal'];
     const randomMode = placementModes[Math.floor(Math.random() * placementModes.length)];
@@ -2341,7 +2336,7 @@ function generateRandomMagicCircle() {
   
   // 50%の確率で二つ目の文字レイヤーを追加
   if (Math.random() > 0.5) {
-    const fontKeys2 = ['serif', 'sans-serif', 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'padauk', 'rampart-one'];
+    const fontKeys2 = [ 'zcool-kuaile', 'hina-mincho', 'reggae-one', 'dot-gothic', 'hachi-maru-pop', 'new-tegomin', 'stick', 'yomogi', 'noto-serif-jp', 'noto-sans-jp', 'zen-old-mincho', 'nothing-you-could-do', 'league-script', 'special-elite', 'libre-barcode-39', 'rampart-one'];
     const randomFont2 = fontKeys2[Math.floor(Math.random() * fontKeys2.length)];
     const placementModes2 = ['loop', 'equal'];
     const randomMode2 = placementModes2[Math.floor(Math.random() * placementModes2.length)];
