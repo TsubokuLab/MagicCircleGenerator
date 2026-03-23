@@ -17,7 +17,12 @@ const app = {
     backgroundColor: '#000000',
     foregroundColor: '#ffffff',
     transparentBackground: false
-  }
+  },
+  // 履歴管理 (Undo/Redo)
+  history: [],
+  historyIndex: -1,
+  // 編集モード
+  editingLayer: null
 };
 
 // レイヤーデータのインポート
@@ -60,6 +65,75 @@ function importLayersFromJSON(jsonData) {
   }
 }
 
+// 履歴管理関数
+function saveHistory() {
+  const state = {
+    layers: app.layers.filter(l => !l.isGhost).map(l => ({
+      id: l.id,
+      type: l.type,
+      params: JSON.parse(JSON.stringify(l.params)),
+      visible: l.visible,
+      name: l.name || null
+    })),
+    settings: { ...app.settings },
+    nextLayerId: app.nextLayerId,
+    activeLayerId: app.activeLayer ? app.activeLayer.id : null
+  };
+  // 前に進んでいた履歴を切り捨て
+  app.history = app.history.slice(0, app.historyIndex + 1);
+  app.history.push(state);
+  // 上限30件
+  if (app.history.length > 31) app.history.shift();
+  else app.historyIndex++;
+  updateUndoRedoButtons();
+}
+
+function restoreState(state) {
+  const ghostLayers = app.layers.filter(l => l.isGhost);
+  app.layers = state.layers.map(l => {
+    const layer = new Layer(l.id, l.type, JSON.parse(JSON.stringify(l.params)));
+    layer.visible = l.visible;
+    layer.name = l.name;
+    return layer;
+  });
+  app.layers.push(...ghostLayers);
+  app.settings = { ...state.settings };
+  app.nextLayerId = state.nextLayerId;
+  app.activeLayer = state.activeLayerId !== null
+    ? app.layers.find(l => l.id === state.activeLayerId) || null
+    : null;
+  document.getElementById('background-color').value = app.settings.backgroundColor;
+  document.getElementById('foreground-color').value = app.settings.foregroundColor;
+  document.getElementById('transparent-background').checked = app.settings.transparentBackground;
+  // 編集モードを解除
+  if (app.editingLayer) cancelEditLayer();
+  LayerManager.updateLayersList();
+  renderCanvas();
+}
+
+function undo() {
+  if (app.historyIndex > 0) {
+    app.historyIndex--;
+    restoreState(app.history[app.historyIndex]);
+    updateUndoRedoButtons();
+  }
+}
+
+function redo() {
+  if (app.historyIndex < app.history.length - 1) {
+    app.historyIndex++;
+    restoreState(app.history[app.historyIndex]);
+    updateUndoRedoButtons();
+  }
+}
+
+function updateUndoRedoButtons() {
+  const undoBtn = document.getElementById('undo-button');
+  const redoBtn = document.getElementById('redo-button');
+  if (undoBtn) undoBtn.disabled = app.historyIndex <= 0;
+  if (redoBtn) redoBtn.disabled = app.historyIndex >= app.history.length - 1;
+}
+
 // ユーティリティ関数
 const Utils = {
   /**
@@ -89,6 +163,7 @@ class Layer {
     this.params = params;
     this.visible = true;
     this.isGhost = false; // ゴーストガイド表示用フラグ
+    this.name = null; // ユーザー定義名
   }
   
   render(ctx, customCanvas, scaleFactor) {
@@ -457,6 +532,7 @@ class Layer {
 // レイヤー管理
 const LayerManager = {
   addLayer: function(type, params) {
+    saveHistory();
     const layer = new Layer(app.nextLayerId++, type, params);
     app.layers.push(layer);
     app.activeLayer = layer;
@@ -464,40 +540,59 @@ const LayerManager = {
     renderCanvas();
     return layer;
   },
-  
+
   removeLayer: function(id) {
     const index = app.layers.findIndex(layer => layer.id === id);
     if (index !== -1) {
+      saveHistory();
       app.layers.splice(index, 1);
       if (app.activeLayer && app.activeLayer.id === id) {
         app.activeLayer = app.layers.length > 0 ? app.layers[app.layers.length - 1] : null;
       }
+      if (app.editingLayer && app.editingLayer.id === id) cancelEditLayer();
       this.updateLayersList();
       renderCanvas();
     }
   },
-  
+
+  duplicateLayer: function(id) {
+    const layer = app.layers.find(l => l.id === id && !l.isGhost);
+    if (!layer) return;
+    saveHistory();
+    const newLayer = new Layer(app.nextLayerId++, layer.type, JSON.parse(JSON.stringify(layer.params)));
+    newLayer.visible = layer.visible;
+    newLayer.name = layer.name ? `${layer.name} (コピー)` : null;
+    const index = app.layers.findIndex(l => l.id === id);
+    app.layers.splice(index + 1, 0, newLayer);
+    app.activeLayer = newLayer;
+    this.updateLayersList();
+    renderCanvas();
+  },
+
   toggleLayerVisibility: function(id) {
     const layer = app.layers.find(layer => layer.id === id);
     if (layer) {
+      saveHistory();
       layer.visible = !layer.visible;
       this.updateLayersList();
       renderCanvas();
     }
   },
-  
+
   moveLayerUp: function(id) {
     const index = app.layers.findIndex(layer => layer.id === id);
     if (index < app.layers.length - 1) {
+      saveHistory();
       [app.layers[index], app.layers[index + 1]] = [app.layers[index + 1], app.layers[index]];
       this.updateLayersList();
       renderCanvas();
     }
   },
-  
+
   moveLayerDown: function(id) {
     const index = app.layers.findIndex(layer => layer.id === id);
     if (index > 0) {
+      saveHistory();
       [app.layers[index], app.layers[index - 1]] = [app.layers[index - 1], app.layers[index]];
       this.updateLayersList();
       renderCanvas();
@@ -507,73 +602,159 @@ const LayerManager = {
   updateLayersList: function() {
     const layersList = document.getElementById('layers-list');
     layersList.innerHTML = '';
-    
-    // ゴーストレイヤーを除外したレイヤー配列を取得
+
     const visibleLayers = app.layers.filter(layer => !layer.isGhost);
-    
-    // レイヤーを逆順に表示（上に表示されるものが先）
+
     for (let i = visibleLayers.length - 1; i >= 0; i--) {
       const layer = visibleLayers[i];
       const layerItem = document.createElement('div');
       layerItem.className = 'layer-item';
-      
+      layerItem.setAttribute('draggable', 'true');
+      layerItem.dataset.id = layer.id;
+
       if (app.activeLayer && app.activeLayer.id === layer.id) {
         layerItem.classList.add('active');
       }
-      
+      if (app.editingLayer && app.editingLayer.id === layer.id) {
+        layerItem.classList.add('editing');
+      }
+
+      const displayName = layer.name || this.getLayerName(layer);
       layerItem.innerHTML = `
-        <span class="layer-visibility" data-id="${layer.id}">
+        <span class="layer-visibility" data-id="${layer.id}" title="表示/非表示">
           ${layer.visible ? '👁️' : '👁️‍🗨️'}
         </span>
-        <span class="layer-name">${this.getLayerName(layer)}</span>
+        <span class="layer-name" data-id="${layer.id}" title="ダブルクリックで名前を変更">${displayName}</span>
         <div class="layer-actions">
-          <button class="layer-up" data-id="${layer.id}">↑</button>
-          <button class="layer-down" data-id="${layer.id}">↓</button>
-          <button class="layer-delete" data-id="${layer.id}">×</button>
+          <button class="layer-edit" data-id="${layer.id}" title="編集"><i class="fas fa-pen"></i></button>
+          <button class="layer-duplicate" data-id="${layer.id}" title="複製"><i class="fas fa-copy"></i></button>
+          <button class="layer-up" data-id="${layer.id}" title="上へ">↑</button>
+          <button class="layer-down" data-id="${layer.id}" title="下へ">↓</button>
+          <button class="layer-delete" data-id="${layer.id}" title="削除">×</button>
         </div>
       `;
-      
+
       layersList.appendChild(layerItem);
     }
-    
-    // イベントリスナー追加
+
+    // 表示/非表示
     document.querySelectorAll('.layer-visibility').forEach(el => {
       el.addEventListener('click', (e) => {
         const id = parseInt(e.currentTarget.dataset.id);
         this.toggleLayerVisibility(id);
       });
     });
-    
+
+    // レイヤー名ダブルクリックで編集
+    document.querySelectorAll('.layer-name').forEach(el => {
+      el.addEventListener('dblclick', (e) => {
+        const id = parseInt(e.currentTarget.dataset.id);
+        const layer = app.layers.find(l => l.id === id);
+        if (!layer) return;
+        const span = e.currentTarget;
+        const currentName = layer.name || this.getLayerName(layer);
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentName;
+        input.className = 'layer-name-input';
+        span.replaceWith(input);
+        input.focus();
+        input.select();
+        const applyName = () => {
+          const newName = input.value.trim();
+          layer.name = newName || null;
+          this.updateLayersList();
+        };
+        input.addEventListener('blur', applyName);
+        input.addEventListener('keydown', (ke) => {
+          if (ke.key === 'Enter') applyName();
+          if (ke.key === 'Escape') this.updateLayersList();
+        });
+      });
+    });
+
+    // 編集ボタン
+    document.querySelectorAll('.layer-edit').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = parseInt(e.currentTarget.dataset.id);
+        startEditLayer(id);
+      });
+    });
+
+    // 複製ボタン
+    document.querySelectorAll('.layer-duplicate').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = parseInt(e.currentTarget.dataset.id);
+        this.duplicateLayer(id);
+      });
+    });
+
+    // 上へ
     document.querySelectorAll('.layer-up').forEach(el => {
       el.addEventListener('click', (e) => {
         const id = parseInt(e.currentTarget.dataset.id);
         this.moveLayerUp(id);
       });
     });
-    
+
+    // 下へ
     document.querySelectorAll('.layer-down').forEach(el => {
       el.addEventListener('click', (e) => {
         const id = parseInt(e.currentTarget.dataset.id);
         this.moveLayerDown(id);
       });
     });
-    
+
+    // 削除
     document.querySelectorAll('.layer-delete').forEach(el => {
       el.addEventListener('click', (e) => {
         const id = parseInt(e.currentTarget.dataset.id);
         this.removeLayer(id);
       });
     });
-    
+
+    // クリックでアクティブレイヤー選択
     document.querySelectorAll('.layer-item').forEach(el => {
       el.addEventListener('click', (e) => {
-        if (!e.target.matches('button, .layer-visibility')) {
-          const id = parseInt(el.querySelector('.layer-visibility').dataset.id);
+        if (!e.target.matches('button, .layer-visibility, .layer-name-input, i')) {
+          const id = parseInt(el.dataset.id);
           const layer = app.layers.find(l => l.id === id);
           if (layer) {
             app.activeLayer = layer;
             this.updateLayersList();
           }
+        }
+      });
+
+      // ドラッグ&ドロップ並び替え
+      el.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', el.dataset.id);
+        el.classList.add('dragging');
+      });
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('drag-over'));
+      });
+      el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('drag-over'));
+        el.classList.add('drag-over');
+      });
+      el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+        const targetId = parseInt(el.dataset.id);
+        if (draggedId === targetId) return;
+        saveHistory();
+        const fromIndex = app.layers.findIndex(l => l.id === draggedId);
+        const toIndex = app.layers.findIndex(l => l.id === targetId);
+        if (fromIndex !== -1 && toIndex !== -1) {
+          const [moved] = app.layers.splice(fromIndex, 1);
+          app.layers.splice(toIndex, 0, moved);
+          this.updateLayersList();
+          renderCanvas();
         }
       });
     });
@@ -1299,6 +1480,163 @@ function getPreviewParams(type, paramName, value) {
   return params;
 }
 
+// ============================================================
+// レイヤー編集モード
+// ============================================================
+function startEditLayer(id) {
+  const layer = app.layers.find(l => l.id === id && !l.isGhost);
+  if (!layer) return;
+  app.editingLayer = layer;
+  app.activeLayer = layer;
+  loadLayerParamsToUI(layer);
+  updateEditModeUI(true);
+  LayerManager.updateLayersList();
+}
+
+function loadLayerParamsToUI(layer) {
+  const tabMap = { circle: 'circles', shapes: 'shapes', lines: 'lines' };
+  const tabId = tabMap[layer.type];
+  // タブ切替
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabId);
+  });
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.toggle('active', content.id === tabId);
+  });
+
+  if (layer.type === 'circle') {
+    const p = layer.params;
+    document.getElementById('circle-radius').value = p.radius;
+    document.getElementById('circle-radius-slider').value = p.radius;
+    document.getElementById('circle-thickness').value = p.thickness;
+    document.getElementById('circle-thickness-slider').value = p.thickness;
+    document.getElementById('circle-style').value = p.style || 'solid';
+    const dashGroup = document.getElementById('circle-dash-group');
+    const lengthGroup = document.getElementById('form-dash-length-group');
+    if (p.style === 'dashed' || p.style === 'dotted') {
+      dashGroup.style.display = 'block';
+      lengthGroup.style.display = p.style === 'dashed' ? 'block' : 'none';
+      document.getElementById('circle-dash-length').value = p.dashLength || 10;
+      document.getElementById('circle-dash-length-slider').value = p.dashLength || 10;
+      document.getElementById('circle-dash-gap').value = p.dashGap || 5;
+      document.getElementById('circle-dash-gap-slider').value = p.dashGap || 5;
+    } else {
+      dashGroup.style.display = 'none';
+    }
+  } else if (layer.type === 'shapes') {
+    const p = layer.params;
+    document.getElementById('shape-type').value = p.shapeType;
+    document.getElementById('shape-size').value = p.size;
+    document.getElementById('shape-size-slider').value = p.size;
+    document.getElementById('shape-count').value = p.count;
+    document.getElementById('shape-count-slider').value = p.count;
+    document.getElementById('shape-radius').value = p.radius;
+    document.getElementById('shape-radius-slider').value = p.radius;
+    document.getElementById('shape-offset').value = p.offset;
+    document.getElementById('shape-offset-slider').value = p.offset;
+    document.getElementById('shape-rotation').value = p.rotation || 0;
+    document.getElementById('shape-rotation-slider').value = p.rotation || 0;
+    document.getElementById('shape-aspect').value = p.aspect || 1;
+    document.getElementById('shape-aspect-slider').value = p.aspect || 1;
+    document.getElementById('shape-fill').value = p.fill || 'fill';
+    const lineThicknessGroup = document.getElementById('shape-line-thickness-group');
+    if (p.fill === 'stroke') {
+      lineThicknessGroup.style.display = 'block';
+      document.getElementById('shape-line-thickness').value = p.lineThickness || 1;
+      document.getElementById('shape-line-thickness-slider').value = p.lineThickness || 1;
+    } else {
+      lineThicknessGroup.style.display = 'none';
+    }
+  } else if (layer.type === 'lines') {
+    const p = layer.params;
+    document.getElementById('line-type').value = p.lineType;
+    document.getElementById('line-count').value = p.count;
+    document.getElementById('line-count-slider').value = p.count;
+    document.getElementById('line-radius').value = p.radius;
+    document.getElementById('line-radius-slider').value = p.radius;
+    document.getElementById('line-thickness').value = p.thickness;
+    document.getElementById('line-thickness-slider').value = p.thickness;
+    document.getElementById('line-offset').value = p.offset;
+    document.getElementById('line-offset-slider').value = p.offset;
+    const starFactorGroup = document.getElementById('star-factor-group');
+    if (p.lineType === 'star') {
+      starFactorGroup.style.display = 'block';
+      document.getElementById('star-factor').value = p.starFactor || 2;
+      document.getElementById('star-factor-slider').value = p.starFactor || 2;
+    } else {
+      starFactorGroup.style.display = 'none';
+    }
+  }
+}
+
+function applyEditLayer(type) {
+  if (!app.editingLayer || app.editingLayer.type !== type) return;
+  saveHistory();
+  let params = { ...app.editingLayer.params };
+
+  if (type === 'circle') {
+    const style = document.getElementById('circle-style').value;
+    params.radius = parseFloat(document.getElementById('circle-radius').value);
+    params.thickness = parseInt(document.getElementById('circle-thickness').value);
+    params.style = style;
+    if (style === 'dashed' || style === 'dotted') {
+      params.dashLength = parseInt(document.getElementById('circle-dash-length').value);
+      params.dashGap = parseInt(document.getElementById('circle-dash-gap').value);
+    }
+  } else if (type === 'shapes') {
+    const fill = document.getElementById('shape-fill').value;
+    params.shapeType = document.getElementById('shape-type').value;
+    params.size = parseFloat(document.getElementById('shape-size').value);
+    params.count = parseInt(document.getElementById('shape-count').value);
+    params.radius = parseFloat(document.getElementById('shape-radius').value);
+    params.offset = parseInt(document.getElementById('shape-offset').value);
+    params.rotation = parseInt(document.getElementById('shape-rotation').value);
+    params.aspect = parseFloat(document.getElementById('shape-aspect').value);
+    params.fill = fill;
+    params.lineThickness = fill === 'stroke' ? parseInt(document.getElementById('shape-line-thickness').value) : 1;
+  } else if (type === 'lines') {
+    const lineType = document.getElementById('line-type').value;
+    params.lineType = lineType;
+    params.count = parseInt(document.getElementById('line-count').value);
+    params.radius = parseFloat(document.getElementById('line-radius').value);
+    params.thickness = parseInt(document.getElementById('line-thickness').value);
+    params.offset = parseInt(document.getElementById('line-offset').value);
+    if (lineType === 'star') {
+      params.starFactor = parseFloat(document.getElementById('star-factor').value);
+    }
+  }
+
+  app.editingLayer.params = params;
+  renderCanvas();
+  cancelEditLayer();
+}
+
+function cancelEditLayer() {
+  app.editingLayer = null;
+  updateEditModeUI(false);
+  LayerManager.updateLayersList();
+}
+
+function updateEditModeUI(editing) {
+  const bar = document.getElementById('layer-edit-bar');
+  const addCircleBtn = document.getElementById('add-circle');
+  const addShapesBtn = document.getElementById('add-shapes');
+  const addLinesBtn = document.getElementById('add-lines');
+  if (editing && app.editingLayer) {
+    bar.style.display = 'flex';
+    const displayName = app.editingLayer.name || LayerManager.getLayerName(app.editingLayer);
+    document.getElementById('editing-layer-name').textContent = displayName;
+    addCircleBtn.innerHTML = '<i class="fas fa-sync"></i> 円を更新';
+    addShapesBtn.innerHTML = '<i class="fas fa-sync"></i> 図形を更新';
+    addLinesBtn.innerHTML = '<i class="fas fa-sync"></i> 線を更新';
+  } else {
+    bar.style.display = 'none';
+    addCircleBtn.innerHTML = '<i class="fa-regular fa-circle"></i> 円を追加';
+    addShapesBtn.innerHTML = '<i class="fas fa-shapes"></i> 図形を追加';
+    addLinesBtn.innerHTML = '<i class="fas fa-project-diagram"></i> 線を追加';
+  }
+}
+
 // DOM要素のイベント設定
 function setupEventListeners() {
   // クレジットコピーボタン
@@ -1361,81 +1699,65 @@ function setupEventListeners() {
     });
   });
   
-  // 円の追加
+  // 円の追加/更新
   document.getElementById('add-circle').addEventListener('click', () => {
+    if (app.editingLayer && app.editingLayer.type === 'circle') {
+      applyEditLayer('circle');
+      return;
+    }
+    if (app.editingLayer) cancelEditLayer();
     const radius = parseFloat(document.getElementById('circle-radius').value);
     const thickness = parseInt(document.getElementById('circle-thickness').value);
     const style = document.getElementById('circle-style').value;
-    
-    const params = {
-      radius,
-      thickness,
-      style,
-      color: app.settings.foregroundColor
-    };
-    
-    // 破線/点線の場合は追加パラメータを取得
+    const params = { radius, thickness, style, color: app.settings.foregroundColor };
     if (style === 'dashed' || style === 'dotted') {
       params.dashLength = parseInt(document.getElementById('circle-dash-length').value);
       params.dashGap = parseInt(document.getElementById('circle-dash-gap').value);
     }
-    
     LayerManager.addLayer('circle', params);
   });
-  
-  // 図形の追加
+
+  // 図形の追加/更新
   document.getElementById('add-shapes').addEventListener('click', () => {
-    const shapeType = document.getElementById('shape-type').value;
-    const size = parseFloat(document.getElementById('shape-size').value);
-    const count = parseInt(document.getElementById('shape-count').value);
-    const radius = parseFloat(document.getElementById('shape-radius').value);
-    const offset = parseInt(document.getElementById('shape-offset').value);
-    const rotation = parseInt(document.getElementById('shape-rotation').value);
-    const aspect = parseFloat(document.getElementById('shape-aspect').value);
-    const fill = document.getElementById('shape-fill').value;
-    
-    // 線の太さは線のみの場合に取得
-    let lineThickness = 1;
-    if (fill === 'stroke') {
-      lineThickness = parseInt(document.getElementById('shape-line-thickness').value);
+    if (app.editingLayer && app.editingLayer.type === 'shapes') {
+      applyEditLayer('shapes');
+      return;
     }
-    
+    if (app.editingLayer) cancelEditLayer();
+    const fill = document.getElementById('shape-fill').value;
+    let lineThickness = 1;
+    if (fill === 'stroke') lineThickness = parseInt(document.getElementById('shape-line-thickness').value);
     LayerManager.addLayer('shapes', {
-      shapeType,
-      size,
-      count,
-      radius,
-      offset,
-      rotation,
-      aspect,
+      shapeType: document.getElementById('shape-type').value,
+      size: parseFloat(document.getElementById('shape-size').value),
+      count: parseInt(document.getElementById('shape-count').value),
+      radius: parseFloat(document.getElementById('shape-radius').value),
+      offset: parseInt(document.getElementById('shape-offset').value),
+      rotation: parseInt(document.getElementById('shape-rotation').value),
+      aspect: parseFloat(document.getElementById('shape-aspect').value),
       fill,
       lineThickness,
       color: app.settings.foregroundColor
     });
   });
-  
-  // 線の追加
+
+  // 線の追加/更新
   document.getElementById('add-lines').addEventListener('click', () => {
+    if (app.editingLayer && app.editingLayer.type === 'lines') {
+      applyEditLayer('lines');
+      return;
+    }
+    if (app.editingLayer) cancelEditLayer();
     const lineType = document.getElementById('line-type').value;
-    const count = parseInt(document.getElementById('line-count').value);
-    const radius = parseFloat(document.getElementById('line-radius').value);
-    const thickness = parseInt(document.getElementById('line-thickness').value);
-    const offset = parseInt(document.getElementById('line-offset').value);
-    
     const params = {
       lineType,
-      count,
-      radius,
-      thickness,
-      offset,
+      count: parseInt(document.getElementById('line-count').value),
+      radius: parseFloat(document.getElementById('line-radius').value),
+      thickness: parseInt(document.getElementById('line-thickness').value),
+      offset: parseInt(document.getElementById('line-offset').value),
       color: app.settings.foregroundColor
     };
-    
-    // 星形の場合は係数を追加
-    if (lineType === 'star') {
-      params.starFactor = parseFloat(document.getElementById('star-factor').value);
-    }
-    
+    if (lineType === 'star') params.starFactor = parseFloat(document.getElementById('star-factor').value);
     LayerManager.addLayer('lines', params);
   });
   
@@ -1517,27 +1839,49 @@ function setupEventListeners() {
     const style = e.target.value;
     const dashGroup = document.getElementById('circle-dash-group');
     const lengthGroup = document.getElementById('form-dash-length-group');
-    
     if (style === 'dashed' || style === 'dotted') {
       dashGroup.style.display = 'block';
-      if(style === 'dashed'){
-        lengthGroup.style.display = 'block';
-      }else{
-        lengthGroup.style.display = 'none';
-      }
+      lengthGroup.style.display = style === 'dashed' ? 'block' : 'none';
     } else {
       dashGroup.style.display = 'none';
       lengthGroup.style.display = 'none';
+    }
+  });
+
+  // Undo/Redo ボタン
+  document.getElementById('undo-button').addEventListener('click', undo);
+  document.getElementById('redo-button').addEventListener('click', redo);
+
+  // 編集バー: 適用/キャンセル
+  document.getElementById('apply-edit-button').addEventListener('click', () => {
+    if (!app.editingLayer) return;
+    applyEditLayer(app.editingLayer.type);
+  });
+  document.getElementById('cancel-edit-button').addEventListener('click', cancelEditLayer);
+
+  // キーボードショートカット Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
+  document.addEventListener('keydown', (e) => {
+    const target = e.target;
+    // 入力フィールドにフォーカス中は無効
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+    if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    } else if (e.ctrlKey && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+      e.preventDefault();
+      redo();
     }
   });
 }
 
 // ランダム魔法陣生成関数
 function generateRandomMagicCircle() {
+  saveHistory();
   // 既存のレイヤーをクリア
   app.layers = [];
   app.activeLayer = null;
   app.nextLayerId = 0;
+  if (app.editingLayer) cancelEditLayer();
   
   // 円を追加（2～5個）
   const baseCircleCount = Math.floor(Math.random() * 4) + 2; // 2～5の範囲
@@ -1626,13 +1970,13 @@ function resizeCanvas() {
 
 function clearAll(){
   if (confirm('すべてのレイヤーをクリアしますか？')) {
-      app.layers = [];
-      app.activeLayer = null;
-      app.nextLayerId = 0;
-      LayerManager.updateLayersList();
-      renderCanvas();
-  }else{
-
+    saveHistory();
+    app.layers = [];
+    app.activeLayer = null;
+    app.nextLayerId = 0;
+    if (app.editingLayer) cancelEditLayer();
+    LayerManager.updateLayersList();
+    renderCanvas();
   }
 }
 
@@ -1897,7 +2241,10 @@ function init() {
   // 初期魔法陣の生成
   //generateRandomMagicCircle();
   importLayersFromJSON(preset_json);
-  
+
+  // 初期状態を履歴に保存
+  saveHistory();
+
   // 初期レンダリングとサイズ調整
   resizeCanvas();
 }

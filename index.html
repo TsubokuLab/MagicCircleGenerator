@@ -80,6 +80,20 @@
           </div>
         </div>
         
+        <div id="layer-edit-bar" class="layer-edit-bar" style="display: none;">
+          <div class="editing-info">
+            <i class="fas fa-pen"></i> <span id="editing-layer-name"></span> を編集中
+          </div>
+          <div class="edit-bar-buttons">
+            <button id="apply-edit-button" class="action-button apply-btn" title="変更を適用">
+              <i class="fas fa-check"></i> 適用
+            </button>
+            <button id="cancel-edit-button" class="action-button cancel-btn" title="編集キャンセル">
+              <i class="fas fa-times"></i> キャンセル
+            </button>
+          </div>
+        </div>
+
         <div class="panel-section">
           <h2>要素追加</h2>
           <div class="element-tabs">
@@ -272,8 +286,16 @@
       <div class="layer-panel">
         <div class="panel-section">
           <div class="button-group">
-          <button id="random-button" class="action-button primary"><i class="fas fa-shuffle"></i> ランダム</button>
-          <button id="reset-button" class="action-button secondary"><i class="fas fa-trash-alt"></i> クリア</button>
+            <button id="random-button" class="action-button primary"><i class="fas fa-shuffle"></i> ランダム</button>
+            <button id="reset-button" class="action-button secondary"><i class="fas fa-trash-alt"></i> クリア</button>
+          </div>
+          <div class="button-group">
+            <button id="undo-button" class="action-button undo-btn" title="元に戻す (Ctrl+Z)" disabled>
+              <i class="fas fa-undo"></i> 戻す
+            </button>
+            <button id="redo-button" class="action-button undo-btn" title="やり直す (Ctrl+Y)" disabled>
+              <i class="fas fa-redo"></i> 進む
+            </button>
           </div>
         </div>
 
