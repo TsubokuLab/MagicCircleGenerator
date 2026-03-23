@@ -48,7 +48,8 @@ function importLayersFromJSON(jsonData) {
       
       // 新しいレイヤーを追加
       data.layers.forEach(layerData => {
-        LayerManager.addLayer(layerData.type, layerData.params);
+        const layer = LayerManager.addLayer(layerData.type, layerData.params);
+        if (layerData.name) layer.name = layerData.name;
       });
       
       // レイヤーリストを更新
@@ -904,7 +905,8 @@ const Exporter = {
       layers: app.layers.filter(layer => !layer.isGhost).map(layer => {
         return {
           type: layer.type,
-          params: { ...layer.params }
+          params: { ...layer.params },
+          name: layer.name || null
         };
       })
     };
