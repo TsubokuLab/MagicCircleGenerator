@@ -635,14 +635,17 @@ main {
   margin-bottom: 15px;
   background-color: rgba(255, 255, 255, 0.02);
   border-radius: 4px;
+  /* スクロールバーの領域を常に確保し、削除ボタン等と重ならないようにする */
+  scrollbar-gutter: stable;
+  padding-right: 4px;
 }
 
 .layer-item {
   display: flex;
   align-items: center;
-  padding: 8px;
+  padding: 8px 4px 8px 6px;
   border-bottom: 1px solid rgba(238, 238, 238, 0.5);
-  gap: 10px;
+  gap: 6px;
   transition: background-color 0.2s ease;
 }
 
