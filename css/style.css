@@ -41,7 +41,6 @@ body {
   margin: 0 auto;
   padding: 20px;
   background-color: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(5px);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
@@ -51,7 +50,6 @@ body {
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(50, 50, 93, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.18);
   transition: box-shadow 0.3s ease;
 }
@@ -212,6 +210,83 @@ body {
   height: 16px;
   margin-left: 10px;
   vertical-align: middle;
+}
+
+/* フォントスタイル */
+.font-serif {
+  font-family: 'serif', serif;
+}
+
+.font-sans-serif {
+  font-family: 'sans-serif', sans-serif;
+}
+
+.font-noto-serif-jp {
+  font-family: 'Noto Serif JP', serif;
+}
+
+.font-noto-sans-jp {
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.font-zcool-kuaile {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+}
+
+.font-hina-mincho {
+  font-family: 'Hina Mincho', serif;
+}
+
+.font-reggae-one {
+  font-family: 'Reggae One', cursive;
+}
+
+.font-dot-gothic {
+  font-family: 'DotGothic16', sans-serif;
+}
+
+.font-hachi-maru-pop {
+  font-family: 'Hachi Maru Pop', cursive;
+}
+
+.font-new-tegomin {
+  font-family: 'New Tegomin', serif;
+}
+
+.font-stick {
+  font-family: 'Stick', sans-serif;
+}
+
+.font-yomogi {
+  font-family: 'Yomogi', cursive;
+}
+
+.font-zen-old-mincho {
+  font-family: 'Zen Old Mincho', serif;
+}
+
+.font-nothing-you-could-do {
+  font-family: 'Nothing You Could Do', cursive;
+}
+
+.font-league-script {
+  font-family: 'League Script', cursive;
+}
+
+.font-special-elite {
+  font-family: 'Special Elite', cursive;
+}
+
+.font-libre-barcode-39 {
+  font-family: 'Libre Barcode 39', monospace;
+}
+
+.font-padauk {
+  font-family: 'Padauk', sans-serif;
+}
+
+.font-rampart-one {
+  font-family: 'Rampart One', cursive;
 }/* リセットCSS */
 * {
   margin: 0;
@@ -399,6 +474,82 @@ main {
   background: linear-gradient(135deg, #e53935, #b71c1c);
 }
 
+.action-button.neutral {
+  background: linear-gradient(135deg, #607d8b, #455a64);
+  font-size: 14px;
+  margin-top: 0;
+}
+
+.action-button.neutral:hover {
+  background: linear-gradient(135deg, #607d8b, #37474f);
+}
+
+.action-button:disabled,
+.action-button:disabled:hover {
+  background: linear-gradient(135deg, #b0bec5, #90a4ae);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.undo-redo-group {
+  margin-bottom: 10px;
+}
+
+/* 更新モード時のアクションボタン */
+.action-button.editing {
+  background: linear-gradient(135deg, #fb8c00, #ef6c00);
+}
+
+.action-button.editing:hover {
+  background: linear-gradient(135deg, #fb8c00, #e65100);
+}
+
+/* 編集モードバナー */
+.edit-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(251, 140, 0, 0.12), rgba(239, 108, 0, 0.12));
+  border: 1px solid rgba(239, 108, 0, 0.4);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.edit-banner-label {
+  color: #e65100;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-banner-exit {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(239, 108, 0, 0.15);
+  border: 1px solid rgba(239, 108, 0, 0.4);
+  color: #e65100;
+  border-radius: 4px;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: background-color 0.2s ease;
+}
+
+.edit-banner-exit:hover {
+  background: rgba(239, 108, 0, 0.3);
+}
+
 /* コンパクト設定 */
 .compact-settings {
   display: flex;
@@ -497,6 +648,68 @@ main {
 
 .layer-item:hover {
   background-color: rgba(245, 245, 245, 0.9);
+}
+
+.layer-item.active {
+  background-color: rgba(63, 81, 181, 0.1);
+  box-shadow: inset 3px 0 0 #3f51b5;
+}
+
+.layer-item.editing {
+  background-color: rgba(251, 140, 0, 0.12);
+  box-shadow: inset 3px 0 0 #ef6c00;
+}
+
+.layer-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  cursor: pointer;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.layer-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.layer-swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.layer-swatch::-moz-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.layer-grip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b0b0b0;
+  cursor: grab;
+  padding: 0 2px;
+  flex-shrink: 0;
+  touch-action: none; /* タッチ時のスクロールを抑止してドラッグを優先 */
+}
+
+.layer-grip:active {
+  cursor: grabbing;
+}
+
+.layer-grip:hover {
+  color: #3f51b5;
+}
+
+.layer-item.dragging {
+  opacity: 0.7;
+  background-color: rgba(63, 81, 181, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .layer-visibility {
