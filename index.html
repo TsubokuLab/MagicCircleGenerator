@@ -85,6 +85,10 @@
         
         <div class="panel-section">
           <h2>要素追加</h2>
+          <div id="edit-mode-banner" class="edit-banner" style="display: none;">
+            <span class="edit-banner-label"><i class="fas fa-pen"></i> <span id="edit-mode-text">編集中</span></span>
+            <button id="exit-edit-mode" class="edit-banner-exit" title="編集をやめて新規追加に戻る" aria-label="編集をやめる"><i class="fas fa-xmark"></i></button>
+          </div>
           <div class="element-tabs">
             <button class="tab-button active" data-tab="circles">円</button>
             <button class="tab-button" data-tab="shapes">図形</button>
@@ -363,6 +367,10 @@
       
       <div class="layer-panel">
         <div class="panel-section">
+          <div class="button-group undo-redo-group">
+          <button id="undo-button" class="action-button neutral" title="元に戻す (Ctrl+Z)" disabled><i class="fas fa-rotate-left"></i> 戻す</button>
+          <button id="redo-button" class="action-button neutral" title="やり直す (Ctrl+Y)" disabled><i class="fas fa-rotate-right"></i> 進む</button>
+          </div>
           <div class="button-group">
           <button id="random-button" class="action-button primary"><i class="fas fa-shuffle"></i> ランダム</button>
           <button id="reset-button" class="action-button secondary"><i class="fas fa-trash-alt"></i> クリア</button>
